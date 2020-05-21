@@ -5,6 +5,8 @@
 <script src="./tp/jquery-2.1.1.js"></script>
 <script src="./js/particle.js"></script>
 <script src="./js/ca.js?v=0.6"></script>
+<script src="./js/org_ca.js?v=0.2"></script>
+<script src="./js/org_tree.js?v=0.2"></script>
 
 <link rel="stylesheet" href="./css/ca.css">
 
@@ -85,7 +87,7 @@ Your browser does not support the HTML5 canvas tag.
 	    console.log("run");
 	    stopSimulation();
 
-	    var config = new SimulationConfig();
+	    var config = new OrgSimulationConfig();
 	    config.autoInit = true;
 	    var c = document.getElementById("myCanvas");
 
@@ -108,14 +110,24 @@ Your browser does not support the HTML5 canvas tag.
 		    return;
 		}
 	    }
+	    
+	    var simulation = new CASimulation(config);
 
 	    if (config.autoInit && config.autoSpark || !config.autoInit) {
-		startSimulation(c, config);
+		simulation.startSimulation(c, config);
 	    }
+	    
+	    var centerCell = simulation.automata.getObjectByCoords([50,50]);
+	    console.log("center cell="+centerCell);
+	    /* let's inject our organism dna to the center cell */
+	    centerCell.rule = new CellRule2(new TreeDNA());
 
 	}
-
+	
+	
 	run();
+	
+	
     </script>
 
 </body>

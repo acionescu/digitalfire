@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<script src="./tp/jquery-2.1.1.js"></script>
+<script src="./js/particle.js"></script>
+<script src="./js/ca.js?v=0.6"></script>
+<script src="./js/org_ca.js?v=0.2"></script>
+<script src="./js/org_generic.js?v=0.2"></script>
+
+<link rel="stylesheet" href="./css/ca.css">
+
+</head>
+<body>
+
+
+	<div class="displayArea">
+
+		<canvas id="myCanvas" width="505" height="505" class="drawArea">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+		<div id="controls" class="controls" styles="width:100%;">
+			<div class="dyn-form" styles="width:100%;">
+
+				<div class="mediumControls">
+					Config:<br>
+					<textarea rows="60" cols="85" name="dnaConfig" id="dnaConfig"
+						style="padding: 10px; margin: 0;"></textarea>
+				</div>
+				<br> <br>
+				<div id="general"></div>
+				<br> <br> <input type="button" value="Restart"
+					onclick="run()">
+			</div>
+		</div>
+
+		<div style="clear: left; margin-left: auto; margin-right: auto;">
+			<br> <br>
+			<p>
+				Set autospark off and try to spark the fire using your mouse. <br>
+				<br> Change the settings, click restart and see what happens. <br>
+				<br> <b>The inner medium</b> is a circle in the center of the
+				canvas with the radius of 150px. <br> <b>The outer medium</b>
+				is what's left from the drawing area. <br> <br> <b>The
+					mask</b> is a vector that defines what neighboring cells will be
+				counted as alive. <br>Possible values: 0 - ignore the cell, 1 -
+				take it into consideration. <br>For each cell, the neighboring
+				cells will be identified like this: <br> <br> 0 1 2 <br>
+				7 x 3 <br> 6 5 4 <br> <br> So a mask like this: 1, 1,
+				0, 1, 1, 1, 0, 1 will take into consideration only the neighbors
+				0,1,3,4,5 and 7. <br> <br> <b>The change rules</b> control
+				the next state of the cell depending on the number of neighboring
+				cells that are alive. <br> The index represents the number of
+				alive cells. <br> Possible values:<br> <br> 0 - mark
+				the cell as dead <br> 1 - mark the cell as alive <br> i -
+				flip the state of the cell <br> k - keep the current state of
+				the cell <br> <br> If the rules vector is
+				0,0,1,0,i,0,0,k,0 then for: <br> <br> 0 neighbors alive -
+				the cell is marked dead <br> 1 neighbor alive - the cell is
+				marked dead <br> 2 neighbors alive - the cell is marked alive <br>
+				3 neighbors alive - the cell is marked dead <br> 4 neighbors
+				alive - the state of the cell is flipped <br> 5 neighbors alive
+				- the cell is marked dead <br> 6 neighbors alive - the cell is
+				marked dead <br> 7 neighbors alive - the state of the cell is
+				not changed <br> 8 neighbors alive - the cell is marked dead
+
+
+			</p>
+		</div>
+
+	</div>
+
+	<script>
+	// 	var c = document.getElementById("myCanvas");
+
+	// 	startSimulation(c);
+
+	function run() {
+	    console.log("run");
+	    stopSimulation();
+
+	    var config = new OrgSimulationConfig();
+	    config.autoInit = true;
+	    var c = document.getElementById("myCanvas");
+
+	    // 	    config.mask1 = $("#innerMedium #mask").val().split(",");
+	    // 	    config.mask2 = $("#outerMedium #mask").val().split(",")
+
+	    // 	    config.changeRules1 = $("#innerMedium #changeRules").val().split(
+	    // 		    ",");
+	    // 	    config.changeRules2 = $("#outerMedium #changeRules").val().split(
+	    // 		    ",");
+
+	    // 	    config.autoSpark = $("#autoSpark").is(":checked");
+	    // 	    config.useBurnMode = $("#burnMode").is(":checked");
+
+	    if (!config.autoInit) {
+		var errors = config.validate([]);
+
+		if (errors.length > 0) {
+		    alert(errors);
+		    return;
+		}
+	    }
+
+	    var simulation = new CASimulation(config);
+
+	    if (config.autoInit && config.autoSpark || !config.autoInit) {
+		simulation.startSimulation(c, config);
+	    }
+
+	    var centerCell = simulation.automata.getObjectByCoords([ 50, 50 ]);
+
+	    /* let's inject our organism dna to the center cell */
+	    centerCell.rule = new CellRule2(new GenericDNA(JSON.parse($(
+		    "#dnaConfig").val())));
+
+	}
+
+	var dnaConfig = {
+	    /* spiral */
+	    // 		genes: {
+	    // 		    "ginit":"A==0 && GG==0 -> V.STEP=1;", 
+	    // 		    "g0": "A==10 && GG < 500 -> R;",
+	    // 		    "g1" : "GG / V.STEP > 0.9 && A==0-> SRM(1);  V.STEP=1.1*V.STEP+1;",
+	    // 		    "g2" : "GG > 25 && GG / V.STEP < 0.7 && A==0 -> SRM(-1);"
+	    // 		}
+	    types : {
+		"branch" : {
+		    params : {
+			priority : 0,
+			"type" : "branch",
+			/* forking frequency */
+			"FORKFQ" : 10,
+			/* spin frequency */
+			"SPINFQ" : 3,
+			/* spin offset */
+			"SPINO" : 10,
+			/* growth period */
+			"GPER" : 10,
+			/* max growth */
+			"GMAX" : 45,
+			/* thickness period */
+			"TPER" : 100,
+			/* thicken limit */
+			"THLIMIT" : 9000,
+			/* constrain direction */
+			"CDIR" : -1,
+			/* leaf creation period */
+			"LCP" : 3,
+			/* leaf creation age */
+			"LCA" : 15
+		    }
+		},
+		"root" : {
+		    params : {
+			"type" : "root",
+			color : 'gray',
+			"FORKFQ" : 7,
+			"SPINFQ" : 4,
+			"SPINO" : 10,
+			"GPER" : 8,
+			"GMAX" : 35,
+			"TPER" : 100,
+			"CDIR" : 1,
+			"THLIMIT" : 7000,
+		    }
+		},
+		"leaf" : {
+		    params : {
+			"type" : "leaf",
+			color : 'green',
+			typeGen : 0,
+			chainType : true,
+			"GMAX" : 2,
+			"FORKFQ" : 4,
+			"SPINFQ" : 2,
+			"SPINO" : 1,
+			"GPER" : 4,
+			priority : 10
+		    }
+		}
+	    },
+
+	    // 			genes : {
+	    // 			    "ginit" : "C.A==0 && C.GG==0 -> V.FORKFQ=10; V.SPINFQ=4; V.GPER=10; V.GMAX=45; V.TPER=100; V.THICKNESS=0; V.CDIR=-1;",
+	    // 			    "croot" : "C.A==1 && C.GG==0 -> SRT('root'); SRM(4); R; SRM(-4); SRT('branch');",
+	    // 			    /* growth */
+	    // 			    "g0" : "V.THICKNESS==0 && C.A==V.GPER && C.TG < V.GMAX && (C.TG < 20 || ABS(RP.Y) > 10 )-> R;",
+	    // 			    /* forking */
+	    // 			    "g1" : "V.THICKNESS==0 && C.GG>0 && C.GG % V.FORKFQ==0 && C.A==15 -> SRM(1); R; SRM(-2); R; SRM(1);",
+	    // 			    /* spin */
+	    // 			    "g3" : "V.THICKNESS==0 && C.GG > V.SPINO && C.GG % V.SPINFQ==0 && C.A==0 -> V.SPINDIR=(ROUND(C.GD*RAND)+C.GG/V.SPINFQ)%3-1; SRM(V.SPINDIR);",
+	    // 			    /* thickness */
+	    // 			    "g4" : "C.A > 0 && C.A % V.TPER == 0 && (RP.Y * V.CDIR > 0) && ((1+6*C.GG)*(1+0.4*C.A)*(1+V.THICKNESS) < V.THLIMIT) -> V.THICKNESS=V.THICKNESS+1; SRM(3); R; V.THICKNESS=V.THICKNESS-1;",
+	    // 			    "cleaf" : "C.T == 'branch' && V.THICKNESS < 1 && C.A == V.LCA && (C.GG % V.LCP == 0) -> SRT('leaf'); SRM(1); R; SRM(-2); R; SRT('branch'); SRM(1);"
+	    // 			}
+
+	    genes : {
+		"ginit" : {
+		    "cond" : "C.A==0 && C.GG==0",
+		    "ops" : "V.FORKFQ=10; V.SPINFQ=4; V.GPER=10; V.GMAX=45; V.TPER=100; V.THICKNESS=0; V.CDIR=-1;"
+		},
+		"croot" : "C.A==1 && C.GG==0 -> SRT('root'); SRM(4); R; SRM(-4); SRT('branch');",
+		/* growth */
+		"g0" : "V.THICKNESS==0 && C.A==V.GPER && C.TG < V.GMAX && (C.TG < 20 || ABS(RP.Y) > 10 )-> R;",
+		/* forking */
+		"g1" : "V.THICKNESS==0 && C.GG>0 && C.GG % V.FORKFQ==0 && C.A==15 -> SRM(1); R; SRM(-2); R; SRM(1);",
+		/* spin */
+		"g3" : "V.THICKNESS==0 && C.GG > V.SPINO && C.GG % V.SPINFQ==0 && C.A==0 -> V.SPINDIR=(ROUND(C.GD*RAND)+C.GG/V.SPINFQ)%3-1; SRM(V.SPINDIR);",
+		/* thickness */
+		"g4" : "C.A > 0 && C.A % V.TPER == 0 && (RP.Y * V.CDIR > 0) && ((1+6*C.GG)*(1+0.4*C.A)*(1+V.THICKNESS) < V.THLIMIT) -> V.THICKNESS=V.THICKNESS+1; SRM(3); R; V.THICKNESS=V.THICKNESS-1;",
+		"cleaf" : "C.T == 'branch' && V.THICKNESS < 1 && C.A == V.LCA && (C.GG % V.LCP == 0) -> SRT('leaf'); SRM(1); R; SRM(-2); R; SRT('branch'); SRM(1);"
+	    }
+	};
+
+	$("#dnaConfig").val(JSON.stringify(dnaConfig, null, '\t'));
+
+	run();
+    </script>
+
+</body>
+
+
+
+</html>

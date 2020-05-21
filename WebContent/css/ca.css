@@ -1,6 +1,6 @@
-
 .controls {
-	float: left;
+/* 	float: right; */
+
 }
 
 .drawArea {
@@ -12,20 +12,25 @@
 	/*margin-left: 200px;*/
 	margin-right: 20px;
 	border: 1px solid #c3c3c3;
- /*	display: block; */
+	display: inline-block;
 }
 
 .displayArea {
-    width : 900px;
-	 	margin-left: auto; 
-	 	margin-right: auto; 
-	 	display: block; 
-	
+	width: 1000px;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+	border: thin solid grey;
+	padding: 10px;
 }
 
 .mediumControls {
 	border: thin solid grey;
 	padding: 10px 10px 10px 10px;
+}
+
+.dyn-form {
+	
 }
 
 .dyn-form ul {
@@ -42,7 +47,7 @@
 	height: 50px;
 }
 
-.dyn-form div,span /*.li-box*/ {
+.dyn-form div, span /*.li-box*/ {
 	/* 	padding: 0px; */
 	/* 	margin: 0px; */
 	display: inline-block;
@@ -53,13 +58,13 @@
 	width: 130px;
 }
 
-.dyn-form input,textarea,select {
+.dyn-form input, textarea, select {
 	display: inline-block;
 	margin-left: 10px;
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
-	height: 33px;
+/* 	height: 33px; */
 	vertical-align: middle;
 }
 

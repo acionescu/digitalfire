@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<script src="./tp/jquery-2.1.1.js"></script>
+
+</head>
+
+<body>
+
+	<div id="result"></div>
+	<!-- 	<object type="text/html" -->
+	<!-- 		data="https://taraluiandrei.ro/ro-smart/sanatate#/votare/" -->
+	<!-- 		width="800px" height="600px" -->
+	<!-- 		style="overflow: auto; border: 5px ridge blue"> </object> -->
+</body>
+
+
+<script>
+    $("#result").html("<h1>bla</h1>");
+    $("#result").load("file:///tmp/sanatate");
+
+    $(document).ready(function() {
+	console.log("ready");
+
+	console.log("loaded");
+	console.log($("#result").find($(".project-item")));
+
+	//	     console.log($("div"));
+
+	$("#result").find(".project-item").each(function(i, e) {
+	    console.log(i);
+	    console.log(e.find(".title").find("h1").text());
+	});
+
+    });
+</script>
+
+
+</html>
