@@ -1,6 +1,26 @@
-//function Point(coords) {
-//    this.coords = coords;
-//}
+/*******************************************************************************
+ *MIT License
+ *
+ *Copyright (c) 2020 Adrian Cristian Ionescu
+ *
+ *Permission is hereby granted, free of charge, to any person obtaining a copy
+ *of this software and associated documentation files (the "Software"), to deal
+ *in the Software without restriction, including without limitation the rights
+ *to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *copies of the Software, and to permit persons to whom the Software is
+ *furnished to do so, subject to the following conditions:
+ *
+ *The above copyright notice and this permission notice shall be included in all
+ *copies or substantial portions of the Software.
+ *
+ *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *SOFTWARE.
+ ******************************************************************************/
 
 function Point(coords) {
     this.coords = coords;
@@ -158,7 +178,10 @@ function PhysicalObject(position, shape, mass) {
     this.shape = shape;
     this.mass = mass;
     this.position = position;
-
+    /* the order in which this object is updated */
+    this.updateIndex=0;
+    /* the parent universe */
+    this.universe;
 }
 
 /* override this for specific behavior */
@@ -169,16 +192,37 @@ PhysicalObject.prototype.draw = function(canvas) {
     this.shape.draw(canvas, this.position);
 };
 
+/* called to mark that this object was changed this iteration by the changer */
+PhysicalObject.prototype.hasChanged=function(changer){
+//    console.log("has changed called on "+this.updateIndex);
+    /* if this object was changed this iteration by an object that is updated after it, then we need to recompute its state */
+    if(changer.updateIndex > this.updateIndex){
+	this.changedBy=changer;
+	this.universe.toUpdate.push(this);
+//	console.log("mark for update "+this.updateIndex);
+    }
+}
+
 function Universe(dimensions) {
     this.dimensions = dimensions;
     this.objects = new Array();
     this.pointsObjects = new Object();
+    this.toUpdate=[];
 }
 
 Universe.prototype.compute = function() {
 
     for (var i = 0; i < this.objects.length; i++) {
-	this.objects[i].compute(this);
+	var obj=this.objects[i];
+	obj.compute(this);
+	/* mark this object as unchanged */
+	obj.changedBy=null;
+    }
+    
+    while(this.toUpdate.length > 0){
+	var obj = this.toUpdate.shift();
+	obj.compute(this);
+	obj.changedBy=null;
     }
 };
 
@@ -190,9 +234,12 @@ Universe.prototype.draw = function(canvas) {
 };
 
 Universe.prototype.addObject = function(object) {
-
+    var objIndex=this.objects.length;
     this.objects.push(object);
     this.pointsObjects[object.position.coords] = object;
+    /* the order in which objects are updated */
+    object.updateIndex=objIndex;
+    object.universe=this;
 };
 
 Universe.prototype.getObjectByCoords = function(coords) {

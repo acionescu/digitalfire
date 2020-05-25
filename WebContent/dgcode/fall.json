@@ -1,0 +1,14 @@
+{
+	"types": {},
+	"genes": {
+		"ginit": "C.GG==0 && C.A==0 -> V.STEP=7; V.A=-1; V.MG=5;V.color='yellow'; V.priority=10; V.LIFE=1; ",
+
+		"g0": "V.MG > C.GG && C.A==0 && V.STEP > 0 -> R;",
+
+                "g3":"V.MG==C.GG  && V.STEP > 0 && C.A ==1-> V.STEP=(V.STEP+V.A); V.MG=(C.GG+V.STEP+1); V.color='green'; R; V.MG=0;",
+
+		"g1": "V.MG==C.GG && C.A==1 && V.STEP==0 -> V.A=1; V.STEP=1; SRM(4); V.MG=(C.GG + V.STEP); V.priority=10; V.color='blue'; R; V.LIFE=200; V.STEP=200; V.color='red';",
+
+		"g2": "C.A >= V.LIFE || C.A >= (V.STEP+1) -> DIE;"
+	}
+}

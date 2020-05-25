@@ -2,6 +2,9 @@
 <html>
 <head>
 <meta charset="utf-8" />
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <script src="./tp/jquery-2.1.1.js"></script>
 <script src="./js/particle.js"></script>
 <script src="./js/ca.js?v=0.6"></script>
@@ -15,70 +18,170 @@
 
 
 	<div class="displayArea">
-
-		<canvas id="myCanvas" width="505" height="505" class="drawArea">
+		<div style="display: inline-block; float: left; max-width: 505;">
+			<canvas id="myCanvas" width="505" height="505" class="drawArea">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
+			<div id="general"
+				style="clear: left; display: block; margin-top: 20px; padding-top: 10px;">
+				<input type="button" value="Restart" onclick="run()">
 
+				<div style="margin-top: 10px; overflow: hidden;">
+					<label for="examples">Examples:</label> <select id="examples">
+
+					</select>
+					<div id="exDesc"
+						style="margin-top: 10px; padding: 5px; max-width: 505px;"></div>
+				</div>
+			</div>
+		</div>
 		<div id="controls" class="controls" styles="width:100%;">
 			<div class="dyn-form" styles="width:100%;">
 
 				<div class="mediumControls">
 					Config:<br>
-					<textarea rows="60" cols="85" name="dnaConfig" id="dnaConfig"
+					<textarea rows="40" cols="85" name="dnaConfig" id="dnaConfig"
 						style="padding: 10px; margin: 0;"></textarea>
 				</div>
 				<br> <br>
-				<div id="general"></div>
-				<br> <br> <input type="button" value="Restart"
-					onclick="run()">
+
+
 			</div>
 		</div>
-
-		<div style="clear: left; margin-left: auto; margin-right: auto;">
-			<br> <br>
-			<p>
-				Set autospark off and try to spark the fire using your mouse. <br>
-				<br> Change the settings, click restart and see what happens. <br>
-				<br> <b>The inner medium</b> is a circle in the center of the
-				canvas with the radius of 150px. <br> <b>The outer medium</b>
-				is what's left from the drawing area. <br> <br> <b>The
-					mask</b> is a vector that defines what neighboring cells will be
-				counted as alive. <br>Possible values: 0 - ignore the cell, 1 -
-				take it into consideration. <br>For each cell, the neighboring
-				cells will be identified like this: <br> <br> 0 1 2 <br>
-				7 x 3 <br> 6 5 4 <br> <br> So a mask like this: 1, 1,
-				0, 1, 1, 1, 0, 1 will take into consideration only the neighbors
-				0,1,3,4,5 and 7. <br> <br> <b>The change rules</b> control
-				the next state of the cell depending on the number of neighboring
-				cells that are alive. <br> The index represents the number of
-				alive cells. <br> Possible values:<br> <br> 0 - mark
-				the cell as dead <br> 1 - mark the cell as alive <br> i -
-				flip the state of the cell <br> k - keep the current state of
-				the cell <br> <br> If the rules vector is
-				0,0,1,0,i,0,0,k,0 then for: <br> <br> 0 neighbors alive -
-				the cell is marked dead <br> 1 neighbor alive - the cell is
-				marked dead <br> 2 neighbors alive - the cell is marked alive <br>
-				3 neighbors alive - the cell is marked dead <br> 4 neighbors
-				alive - the state of the cell is flipped <br> 5 neighbors alive
-				- the cell is marked dead <br> 6 neighbors alive - the cell is
-				marked dead <br> 7 neighbors alive - the state of the cell is
-				not changed <br> 8 neighbors alive - the cell is marked dead
-
-
-			</p>
-		</div>
-
 	</div>
 
-	<script>
-	// 	var c = document.getElementById("myCanvas");
+	<div id="infoCont"
+		style="margin-top: 20px; border-top: thin solid gray;">
 
-	// 	startSimulation(c);
+		<div style="clear: left; margin-left: auto; margin-right: auto;">
+			<h3>What is this</h3>
+
+			<p>This is a cellular automata simulation that uses a 2D matrix
+				of cells to generate interesting effects. Each cell executes simple
+				rules that control its state and behavior ( color, replication,
+				state (on/off), etc ). The "program" that the cells execute can be
+				defined in the area to the right, via a metalanguage similar to the
+				genetic code of real cells.</p>
+
+			<h3>How a cell works</h3>
+
+			<p>A cell is a square with a given dimension on the canvas. It
+				can react to its environment according to a "genetic code", defined
+				in the area on the right side.</p>
+
+			<p>One can configure cells to execute a certain program defining
+				particular cell types and genes that instruct them what to do.</p>
+
+			<p>
+				The simulation starts by default with a single cell in the center of
+				the board and evolves from there according to the program on the
+				right. You can specify a different starting setup by instructing the
+				program what cells to activate, via the <span class="code">setup.cells</span>
+				parameter. For example, to initialize a cell at position x: 20 and
+				y: 40, and another one at position x: 30, and y -20, you can add
+				this to the configuration: { ... "setup":{ "cells":[ { "pos":
+				[20,40], "type":"add a type defined by you" }, { "pos": [30,-20] } ]
+				} ... }</pre>
+				
+				As you can see, besides the position, you can specify a custom type of the cell, defined via the <span
+				class="code">types</span> parameter of the co
+			nfiguration.
+				</p>
+
+			<p>
+				The default replication direction of the original cell is straight
+				up, but it can be modified via the <a href="#SRM">SRM</a> operation.
+			</p>
+
+			<h4>Neighbors</h4>
+
+
+			<p>
+				Each cell is aware of its direct neighbors. <br>For each cell,
+				the neighboring cells will be identified like this: <br> <br>
+				0 1 2 <br> 7 x 3 <br> 6 5 4 <br> <br> A cell can
+				"act" upon its direct neighbors by replicating its genetic code to
+				them if they are empty or they have a lower priority. See the
+				example code.
+			</p>
+
+			<h4>Cell's properties and operations</h4>
+
+			<p>To program cells to do something, one needs to define genes in
+				the <span class="code">genes</span> section of the configuration. Each gene has an
+				activation function ( a certain set of conditions that need to be
+				fulfilled), and a set of operations that are executed if its
+				activation function returns true. See the example to understand how
+				this works.</p>
+
+			<p>The most important operations are:
+			
+			<ul>
+				<li><a href="#R;">Replication(R;)</a> - to make the cell clone
+					itself to an inactive neighboring cell
+				
+				<li><a href="#SRM">Replication direction spin(SRM)</a> - to
+					rotate the direction of replication
+				
+				<li><a href="#SRT">Set replication type(SRT)</a> - to set a new
+					cell type for the child cell
+			
+			</ul>
+			</p>
+
+			<p>Most important properties:
+			
+			<ul>
+				<li><a href="#C.A">Cell's age(C.A)</a> - The number of
+					iterations since the cell was born.</li>
+				<li><a href="#C.GG">Cell's global generation(C.GG)</a> - The
+					number of ancestors since the original cell</li>
+				<li><a href="#C.TG">Cell's type generation(C.TG)</a> - The
+					number of ancestors of this cell's type</li>
+				<li><a href="#C.T">Cell's type(C.T)</a> - The type of this cell</li>
+				<li><a href="#RP.X">Cell's horizontal coordinate from the
+						original cell(RP.X)</a> - 0 at the position of original cell.
+					Decreases to the left, increases to the right.</li>
+				<li><a href="#RP.Y">Cell's vertical coordinate from the
+						original cell(RP.Y)</a> - 0 at the position of the original cell.
+					Decreases upwards, increases downwards.</li>
+			</ul>
+			</p>
+
+			<p>Read below to see all possible properties and operations.</p>
+
+		</div>
+		<div>
+			<h3>How cells can be programmed via the metalanguage</h3>
+			<div id="metaLanguageInfo">
+				<div>
+					<h3>Cell properties and helper functions</h3>
+					<div id="mlPropsHelp"></div>
+
+				</div>
+				<div>
+					<h3>Cell operations</h3>
+
+					<p>All operations need to end with the ; character.</p>
+
+					<div id="mlOpsHelp"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<script>
+	Cell.DNA_ENGINE.generatePropsHelp($("#mlPropsHelp"));
+	Cell.DNA_ENGINE.generateOpsHelp($("#mlOpsHelp"));
+
+	var simulation;
 
 	function run() {
 	    console.log("run");
-	    stopSimulation();
+	    if (simulation != null) {
+		simulation.stopSimulation();
+	    }
 
 	    var config = new OrgSimulationConfig();
 	    config.autoInit = true;
@@ -104,31 +207,56 @@ Your browser does not support the HTML5 canvas tag.
 		}
 	    }
 
-	    var simulation = new CASimulation(config);
+	    simulation = new CASimulation(config);
 
-	    if (config.autoInit && config.autoSpark || !config.autoInit) {
+	    if (config.autoInit) {
 		simulation.startSimulation(c, config);
 	    }
 
-	    var centerCell = simulation.automata.getObjectByCoords([ 50, 50 ]);
-
 	    /* let's inject our organism dna to the center cell */
-	    centerCell.rule = new CellRule2(new GenericDNA(JSON.parse($(
-		    "#dnaConfig").val())));
+
+	    var dgcode = $("#dnaConfig").val();
+	    dgcode = dgcode.replace(new RegExp("/?\\*.*\\*/", 'g'), "");
+	    // 	    console.log("Parsing: "+dgcode);
+
+	    var dgConf = JSON.parse(dgcode);
+
+	    $("#exDesc").html(dgConf.desc);
+
+	    if (dgConf.setup != null && dgConf.setup.cells != null) {
+		var cells = dgConf.setup.cells;
+		for ( var ci in cells) {
+		    var cDef = cells[ci];
+		    var pos = cDef.pos;
+		    if (pos == null) {
+			continue;
+		    }
+		    var cell = simulation.automata.getObjectByCoords(pos);
+
+		    if (cell == null) {
+			continue;
+		    }
+
+		    /* initialize cell */
+		    var dna = new GenericDNA(dgConf);
+		    if (cDef.type != null) {
+			dna.setupType(cDef.type);
+		    }
+		    cell.rule = new CellRule2(dna);
+		}
+	    } else {
+		var centerCell = simulation.automata
+			.getObjectByCoords([ 50, 50 ]);
+		centerCell.rule = new CellRule2(new GenericDNA(dgConf));
+	    }
 
 	}
 
-	var dnaConfig = {
-	    /* spiral */
-	    // 		genes: {
-	    // 		    "ginit":"A==0 && GG==0 -> V.STEP=1;", 
-	    // 		    "g0": "A==10 && GG < 500 -> R;",
-	    // 		    "g1" : "GG / V.STEP > 0.9 && A==0-> SRM(1);  V.STEP=1.1*V.STEP+1;",
-	    // 		    "g2" : "GG > 25 && GG / V.STEP < 0.7 && A==0 -> SRM(-1);"
-	    // 		}
+	var treeConfig = {
 	    types : {
 		"branch" : {
 		    params : {
+			/* types with higher priority(smaller number) can overwrite types with lower priority ( bigger number ) */
 			priority : 0,
 			"type" : "branch",
 			/* forking frequency */
@@ -164,7 +292,7 @@ Your browser does not support the HTML5 canvas tag.
 			"GMAX" : 35,
 			"TPER" : 100,
 			"CDIR" : 1,
-			"THLIMIT" : 7000,
+			"THLIMIT" : 7000
 		    }
 		},
 		"leaf" : {
@@ -183,20 +311,6 @@ Your browser does not support the HTML5 canvas tag.
 		}
 	    },
 
-	    // 			genes : {
-	    // 			    "ginit" : "C.A==0 && C.GG==0 -> V.FORKFQ=10; V.SPINFQ=4; V.GPER=10; V.GMAX=45; V.TPER=100; V.THICKNESS=0; V.CDIR=-1;",
-	    // 			    "croot" : "C.A==1 && C.GG==0 -> SRT('root'); SRM(4); R; SRM(-4); SRT('branch');",
-	    // 			    /* growth */
-	    // 			    "g0" : "V.THICKNESS==0 && C.A==V.GPER && C.TG < V.GMAX && (C.TG < 20 || ABS(RP.Y) > 10 )-> R;",
-	    // 			    /* forking */
-	    // 			    "g1" : "V.THICKNESS==0 && C.GG>0 && C.GG % V.FORKFQ==0 && C.A==15 -> SRM(1); R; SRM(-2); R; SRM(1);",
-	    // 			    /* spin */
-	    // 			    "g3" : "V.THICKNESS==0 && C.GG > V.SPINO && C.GG % V.SPINFQ==0 && C.A==0 -> V.SPINDIR=(ROUND(C.GD*RAND)+C.GG/V.SPINFQ)%3-1; SRM(V.SPINDIR);",
-	    // 			    /* thickness */
-	    // 			    "g4" : "C.A > 0 && C.A % V.TPER == 0 && (RP.Y * V.CDIR > 0) && ((1+6*C.GG)*(1+0.4*C.A)*(1+V.THICKNESS) < V.THLIMIT) -> V.THICKNESS=V.THICKNESS+1; SRM(3); R; V.THICKNESS=V.THICKNESS-1;",
-	    // 			    "cleaf" : "C.T == 'branch' && V.THICKNESS < 1 && C.A == V.LCA && (C.GG % V.LCP == 0) -> SRT('leaf'); SRM(1); R; SRM(-2); R; SRT('branch'); SRM(1);"
-	    // 			}
-
 	    genes : {
 		"ginit" : {
 		    "cond" : "C.A==0 && C.GG==0",
@@ -206,18 +320,111 @@ Your browser does not support the HTML5 canvas tag.
 		/* growth */
 		"g0" : "V.THICKNESS==0 && C.A==V.GPER && C.TG < V.GMAX && (C.TG < 20 || ABS(RP.Y) > 10 )-> R;",
 		/* forking */
-		"g1" : "V.THICKNESS==0 && C.GG>0 && C.GG % V.FORKFQ==0 && C.A==15 -> SRM(1); R; SRM(-2); R; SRM(1);",
+		"g1" : "V.THICKNESS==0 && C.GG>0 && C.GG % V.FORKFQ==0 && C.A==20 -> SRM(1); R; SRM(-2); R; SRM(1);",
 		/* spin */
-		"g3" : "V.THICKNESS==0 && C.GG > V.SPINO && C.GG % V.SPINFQ==0 && C.A==0 -> V.SPINDIR=(ROUND(C.GD*RAND)+C.GG/V.SPINFQ)%3-1; SRM(V.SPINDIR);",
+		"g3" : {
+		    "cond" : "V.THICKNESS==0 && C.GG > V.SPINO && C.GG % V.SPINFQ==0 && C.A==0",
+		    "ops" : "V.SPINDIR=(ROUND(C.GD*RAND)+C.GG/V.SPINFQ)%3-1; SRM(V.SPINDIR);"
+		},
 		/* thickness */
 		"g4" : "C.A > 0 && C.A % V.TPER == 0 && (RP.Y * V.CDIR > 0) && ((1+6*C.GG)*(1+0.4*C.A)*(1+V.THICKNESS) < V.THLIMIT) -> V.THICKNESS=V.THICKNESS+1; SRM(3); R; V.THICKNESS=V.THICKNESS-1;",
 		"cleaf" : "C.T == 'branch' && V.THICKNESS < 1 && C.A == V.LCA && (C.GG % V.LCP == 0) -> SRT('leaf'); SRM(1); R; SRM(-2); R; SRT('branch'); SRM(1);"
 	    }
 	};
 
-	$("#dnaConfig").val(JSON.stringify(dnaConfig, null, '\t'));
+	var testConf = {
+	    "types" : {},
+	    "genes" : {
+		"ginit" : "C.GG==0 && C.A==0 -> V.STEP=30; V.A=-1; V.RC=0; V.color='yellow'; V.priority=10;",
+		"g0" : "V.RC==C.GG && C.A==0 && V.STEP > 0 -> V.LIFE=(2); V.STEP=(V.STEP+V.A); V.RC=V.RC+1; R; ",
+		"g1" : "V.RC==(C.GG ) && C.A==0 && V.STEP == 0 -> V.A=1; V.STEP=1; SRM(4); V.RC=V.RC+1; V.priority=5; R; ",
+		"g2" : "C.A >= V.LIFE || C.A >= (V.STEP+1) -> DIE;"
+	    }
+	};
 
-	run();
+	// 	$("#dnaConfig").val(JSON.stringify(testConf, null, '\t'));
+	$("#dnaConfig").load("dgcode/updown.json", function(d) {
+	    $("#dnaConfig").val(d);
+	});
+
+	var exFiles = [ "tree.json", "updown.json", "spiral.json", "snake.json" ];
+	var exConf = {};
+	var loaded = 0;
+	var loadAttempts = 0;
+
+	var urlParams = getURLParams();
+
+	var selExId = urlParams["exId"];
+
+	function prepareExample(id) {
+	    $("#dnaConfig").val(exConf[id].source);
+	}
+
+	function onSelection(e) {
+	    selExId = $(e.target).val();
+	    prepareExample(selExId);
+	    run();
+	}
+
+	var onFileLoad = function(fName, data) {
+	    console.log("file loaded " + fName);
+	    /* remove comments */
+	    var conf = JSON.parse(data.replace(new RegExp("/?\\*.*\\*/", 'g'),
+		    ""));
+
+	    console.log("add title " + conf.title);
+	    var id = fName.split(".")[0];
+	    var opt = $("<option>").val(id).html(conf.title);
+
+	    $("#examples").append(opt);
+	    exConf[id] = {
+		source : data,
+		conf : conf
+	    };
+
+	    if (loaded == 0 && selExId == null) {
+		selExId = id;
+	    } else {
+		$("#examples").val(selExId);
+	    }
+
+	    opt.click(onSelection);
+
+	    loaded++;
+
+	    if (loadAttempts == exFiles.length) {
+		prepareExample(selExId);
+		run();
+	    }
+	}
+
+	var loadFile = function(fName) {
+
+	    var fPath = "dgcode/" + fName;
+
+	    $.get(fPath, function(d) {
+		try {
+		    loadAttempts++;
+		    onFileLoad(fName, d);
+		} catch (e) {
+		    console.log("Failed loading file " + fName
+			    + " with error: " + e);
+		}
+
+		
+
+	    }, 'text');
+
+	}
+
+	for ( var fi in exFiles) {
+
+	    var fName = exFiles[fi];
+	    loadFile(fName);
+
+	}
+
+	// 	run();
     </script>
 
 </body>

@@ -1,3 +1,26 @@
+/*******************************************************************************
+ *MIT License
+ *
+ *Copyright (c) 2020 Adrian Cristian Ionescu
+ *
+ *Permission is hereby granted, free of charge, to any person obtaining a copy
+ *of this software and associated documentation files (the "Software"), to deal
+ *in the Software without restriction, including without limitation the rights
+ *to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *copies of the Software, and to permit persons to whom the Software is
+ *furnished to do so, subject to the following conditions:
+ *
+ *The above copyright notice and this permission notice shall be included in all
+ *copies or substantial portions of the Software.
+ *
+ *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *SOFTWARE.
+ ******************************************************************************/
 function DNAEvalEngine() {
     
     /* A runtime object to store temporary reusable values */
@@ -11,6 +34,8 @@ function DNAEvalEngine() {
     this.scopes = [
     {
 	"READV" : {
+	    desc: "Read a custom variable",
+	    usage: "V.<variable name>",
 	    regexp: "V\\.\\w*",
 	    proc: function(match){
 		var name = match.substring(2);
@@ -19,6 +44,8 @@ function DNAEvalEngine() {
 	},
 	
 	"RAND" : {
+	    desc: "Generate a random number between 0 and 1",
+	    usage: "RAND",
 	    regexp: "RAND",
 	    proc : function(match){
 		return "Math.random()";
@@ -26,6 +53,8 @@ function DNAEvalEngine() {
 	}
 	,
 	"ROUND" : {
+	    desc: "Round to an integer",
+	    usage: "ROUND(&lt;expression&gt;) - don't use nested parentheses",
 	    regexp:"ROUND\\((.*?\\))",
 	    proc:function(match){
 		var subStr = match.substring(6,match.length-1);
@@ -36,28 +65,19 @@ function DNAEvalEngine() {
 	}
 	,
 	"ABS" :{
+	    desc: "Compute absolute value",
+	    usage: "ABS(&lt;expression&gt;) - don't use nested parentheses",
 	    regexp:"ABS\\((.*?\\))",
 	    proc: function(match){
 		var subStr = match.substring(4,match.length-1);
 		return "Math.abs("+self.parseCondition(subStr)+")";
 	    }
-	},
-	"RP.X" : {
-	    regexp:"RP\\.X",
-	    proc: function(match){
-		return "cell.rule.dna.relPos.x()";
-	    }
-	},
-	"RP.Y" : {
-	    regexp:"RP\\.Y",
-	    proc: function(match){
-		return "cell.rule.dna.relPos.y()";
-	    }
 	}
-	
     }, {
 	/* global generation */
 	"C.GG" : {
+	    desc: "Global generation of the cell",
+	    usage: "C.GG",
 	    regexp:"C\\.GG",
 	    proc: function(match){
 		return "cell.rule.dna.gen";
@@ -66,6 +86,8 @@ function DNAEvalEngine() {
 	},
 	/* type generation */
 	"C.TG" : {
+	    desc: "Type generation of the cell - This will be zero for the first generation of a given cell type and grows in offsprings",
+	    usage: "C.TG",
 	    regexp:"C\\.TG",
 	    proc: function(match){
 		console.log("match type gen: "+match);
@@ -74,6 +96,8 @@ function DNAEvalEngine() {
 	    
 	},
 	"C.A" : {
+	    desc: "Age of the cell - iterations since the cell was born",
+	    usage: "C.A",
 	    regexp:"C\\.A",
 	    proc: function(match){
 		return "cell.age";
@@ -81,6 +105,8 @@ function DNAEvalEngine() {
 	},
 	/* growth direction */
 	"C.GD" : {
+	    desc: "The direction in which the cell grown from the parent. A value from 0 to 7. See cell neighbors.",
+	    usage: "C.GD",
 	    regexp:"C\\.GD",
 	    proc: function(match){
 		return "cell.rule.dna.params.growthDir";
@@ -95,16 +121,36 @@ function DNAEvalEngine() {
 	},
 	/* to what type should this cell replicate ( defaults to cell's type ) */
 	"C.RT" : {
+	    desc: "To what type should a cell replicate - The type of the child cell will be set to this.",
+	    usage: "C.RT",
 	    regexp:"C\\.RT",
 	    proc: function(match){
 		return "cell.rule.dna.params.replicationType";
 	    }
 	},
+	/* type of the cell */
 	"C.T" :{
+	    desc: "The type of the cell.",
+	    usage: "C.T",
 	    regexp:"C\\.T",
 	    proc: function(match){
-		console.log("match type: "+match);
 		return "cell.rule.dna.params.type";
+	    }
+	},
+	"RP.X" : {
+	    desc: "The x coordinate of the relative position of the cell from the original cell.",
+	    usage: "RP.X",
+	    regexp:"RP\\.X",
+	    proc: function(match){
+		return "cell.rule.dna.relPos.x()";
+	    }
+	},
+	"RP.Y" : {
+	    desc: "The y coordinate of the relative position of the cell from the original cell.",
+	    usage: "RP.Y",
+	    regexp:"RP\\.Y",
+	    proc: function(match){
+		return "cell.rule.dna.relPos.y()";
 	    }
 	}
     }, {
@@ -117,6 +163,8 @@ function DNAEvalEngine() {
     this.ops = {
 	/* replication operation */
 	"R;" : {
+	    desc: "Replication function. In replicates the current cell according to its internal state. Relevant parameters are the replication direction and the replication type.",
+	    usage: "R;",
 	    op : function(cell) {
 
 		cell.rule.dna.doReplication(cell, function(sdna, c, t, i) {
@@ -151,6 +199,8 @@ function DNAEvalEngine() {
 	},
 	/* set replication type */
 	"SRT" : {
+	    desc: "Sets the replication type of the cell. This is used during the replication operation to set the type of the child cell.",
+	    usage: "SRT(&lt;a predefined cell type&gt;);",
 	    regex:"SRT\\((.*?;)",
 	    proc: function(match,offset,string){
 		var subStr = match.substring(4,match.length-2);
@@ -176,7 +226,8 @@ function DNAEvalEngine() {
 	 * <-> 7) . Positive to the right, negative to the left
 	 */
 	"SRM" : {
-//	    regex:"SRM\\(-?[0-7]\\);",
+	    desc: "Spins the cell replication mask vector. A value between -7 and 7 can be given. A negative value spins to the left, a positive value to the right, for that number of times.",
+	    usage: "SRM(&lt;number of times&gt;);",
 	    regex:"SRM\\((.*?;)",
 	    /*
 	     * this further processes the capture group and returns the final
@@ -203,6 +254,8 @@ function DNAEvalEngine() {
 	},
 	/* set custom parameter ( always a number ) */
 	"SETV" :{
+	    desc: "Defines/sets a custom variable. ",
+	    usage: "V.&lt;name of the variable&gt;=&lt;expression&gt;;",
 	    regex: "V\\.\\w*=(.*?;)",
 	    proc:function(match){
 		var subStr = match.substring(2,match.length-1);
@@ -211,13 +264,13 @@ function DNAEvalEngine() {
 		var val = kv[1];
 		
 		/* create a runtime function vor value expression */
-		
-		if(self.runtime.exp[val] == null){
-		    self.runtime.exp[val] = self.getCondition(/*"cell.rule.dna.params."+name+"="+*/val);
+		var vs =val.replace(/'/g,"");
+		if(self.runtime.exp[vs] == null){
+		    self.runtime.exp[vs] = self.getCondition(val);
 		}
 		
 		return "Cell.DNA_ENGINE.ops['" + "SETV"
-		    + "'].op(cell,Cell.DNA_ENGINE.runtime.exp['"+val+"'],'"+name+"');";
+		    + "'].op(cell,Cell.DNA_ENGINE.runtime.exp['"+vs+"'],'"+name+"');";
 	    },
 	    op: function(cell,valFunc,param){
 //		console.log("setting "+param +" = "+valFunc);
@@ -225,6 +278,46 @@ function DNAEvalEngine() {
 		
 		cell.rule.dna.params[param]=val;
 		
+	    }
+	},
+	"DIE":{
+	    desc: "The dna of this cell is deleted, leaving the space empty for another dna to be set.",
+	    usage: "DIE;",
+	    regexp:"DIE;",
+	    op: function(cell){
+		if(cell.rule.dna != null){
+		    cell.rule.dna.reset(cell);
+		}
+		cell.drawn=false;
+	    }
+	},
+	"ON":{
+	    desc: "Turns the cell on - the cell will be drawn.",
+	    usage: "ON;",
+	    regexp:"ON;",
+	    op: function(cell){
+		cell.rule.dna.setStateOn(cell);
+		cell.drawn=false;
+	    }
+	}
+	,
+	"OFF":{
+	    desc: "Turns the cell off - the cell will not be drawn but it keeps its code and continues operating.",
+	    usage: "OFF;",
+	    regexp:"OFF;",
+	    op: function(cell){
+		cell.rule.dna.setStateOff(cell);
+		cell.drawn=false;
+	    }
+	}
+	,
+	"FLIP":{
+	    desc: "Flips the state of the cell - if ON, it is turned OFF, if OFF, it is turned ON.",
+	    usage: "FLIP;",
+	    regexp:"FLIP;",
+	    op: function(cell){
+		cell.rule.dna.setStateOff(cell);
+		cell.drawn=false;
 	    }
 	}
     };
@@ -322,7 +415,16 @@ DNAEvalEngine.prototype.parseOps = function(input) {
 }
 
 DNAEvalEngine.prototype.getOps = function(input) {
-    return new Function('cell', this.parseOps(input));
+    var df= new Function('cell', this.parseOps(input));
+    
+    return function(cell){
+	try{
+	    df(cell);
+	}
+	catch (e){
+	    console.log( "Failed processing "+input+" with error "+e);
+	}
+    }
 }
 
 DNAEvalEngine.prototype.getGenericGene = function(input) {
@@ -343,6 +445,50 @@ DNAEvalEngine.prototype.getGenericGene = function(input) {
     var ops = this.getOps(opsString);
 
     return new CellGene(cond, ops);
+}
+
+/**
+ * Generates help. 
+ */
+DNAEvalEngine.prototype.generateHelp = function(name, eDef,container){
+    var desc = eDef.desc;
+    var usage = eDef.usage;
+    if(!desc || !usage){
+	/* can't generate help if no metadata is present */
+	return;
+    }
+    
+    /* create a container for this property */
+    var nc=$("<div id='"+name+"' class='helpCont'>");
+    container.append(nc);
+    
+    nc.append($("<div class='helpContTitle'>").html(name));
+    
+    var ncBody = $("<div class='helpContBody'>");
+    nc.append(ncBody);
+    
+    ncBody.append($("<div>").html("<b>Description:</b> "+desc));
+    ncBody.append($("<div>").html("<b>Usage:</b> "+usage));
+}
+
+/**
+ * Expects a jquery container
+ */
+DNAEvalEngine.prototype.generatePropsHelp=function(container){
+    for(var si=this.scopes.length-1;si>=0;si--){
+	var s = this.scopes[si];
+	for(var p in s){
+	    this.generateHelp(p,s[p],container);
+	}
+    }
+}
+
+DNAEvalEngine.prototype.generateOpsHelp=function(container){
+    for(var o in this.ops){
+	var oDef = this.ops[o];
+	
+	this.generateHelp(o,oDef,container);
+    }
 }
 
 Cell.DNA_ENGINE = new DNAEvalEngine();
@@ -369,6 +515,22 @@ function GenericDNA(config) {
 GenericDNA.prototype = new OrgCellRuleDNA();
 GenericDNA.prototype.constructor = GenericDNA;
 
-var t="(ROUND(GG*RAND())+GD)%3-1".replace(new RegExp("ROUND\\((.*?\\))",'g'),"bla");
+var getURLParams = function (url) {
+    	if(url == null){
+    	    url=window.location.href;
+    	}
+	var params = {};
+	var parser = document.createElement('a');
+	parser.href = url;
+	var query = parser.search.substring(1);
+	var vars = query.split('&');
+	for (var i = 0; i < vars.length; i++) {
+		var pair = vars[i].split('=');
+		params[pair[0]] = decodeURIComponent(pair[1]);
+	}
+	return params;
+};
 
-console.log("test="+t);
+
+
+

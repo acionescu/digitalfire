@@ -1,0 +1,11 @@
+{
+"title": "Spiraling snake",
+"desc":"Creates a snake like creature spirialing away.",
+	"types": {},
+	"genes": {
+                "ginit":"C.GG==0 && C.A==0 -> V.STEP=3;",
+		"g0": " (C.GG % V.STEP)==0 && C.A==1 -> SRM(1); V.STEP=ROUND(C.GG / V.STEP)+1;",
+		"g1": "C.A==2 -> R;",
+		"g2": "C.A==(2+V.STEP) -> DIE;"
+	}
+}

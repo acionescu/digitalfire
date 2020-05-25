@@ -1,0 +1,11 @@
+{
+"title":"Create a spiral",
+"desc": "Creates a spiral starting from the center of the screen",
+
+			"genes": {
+			    "ginit":"C.A==0 && C.GG==0 -> V.STEP=1;", 
+			    "g0": "C.A==10 && C.GG < 500 -> R;",
+			    "g1" : "C.GG / V.STEP > 0.9 && C.A==0-> SRM(1);  V.STEP=1.1*V.STEP+1;",
+			    "g2" : "C.GG > 25 && C.GG / V.STEP < 0.7 && C.A==0 -> SRM(-1);"
+		}
+}

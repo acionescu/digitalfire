@@ -1,3 +1,26 @@
+/*******************************************************************************
+ *MIT License
+ *
+ *Copyright (c) 2020 Adrian Cristian Ionescu
+ *
+ *Permission is hereby granted, free of charge, to any person obtaining a copy
+ *of this software and associated documentation files (the "Software"), to deal
+ *in the Software without restriction, including without limitation the rights
+ *to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *copies of the Software, and to permit persons to whom the Software is
+ *furnished to do so, subject to the following conditions:
+ *
+ *The above copyright notice and this permission notice shall be included in all
+ *copies or substantial portions of the Software.
+ *
+ *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *SOFTWARE.
+ ******************************************************************************/
 /* cellular automata */
 
 function CellularAutomata(dimensions, config) {
@@ -39,6 +62,7 @@ Cell.prototype.constructor = Cell;
 Cell.prototype.compute = function(automata) {
     this.oldState = this.state;
     this.rule.execute(this);
+    this.drawn=false;
     this.computeStats();
 };
 
@@ -55,7 +79,7 @@ Cell.prototype.addNeighbor = function(cell) {
 };
 
 Cell.prototype.draw = function(canvas) {
-    if (this.drawn && this.oldState == this.state) {
+    if (this.drawn && (this.oldState == this.state) ) {
 	return;
     }
     if (this.state) {
@@ -623,13 +647,13 @@ CASimulation.prototype.populateAutomata = function(automata) {
 	    var changeRules = config.changeRules1;
 	    var mr = 0.7;
 	    var opt = [ 0.8, 0.81, 0.9, 1, 1 ];
-
-	    if (Math.sqrt(Math.pow(Math.abs(side / 2 - col), 2)
-		    + Math.pow(Math.abs(side / 2 - row), 2)) > 30) {
-		m = config.mask2;
-		changeRules = config.changeRules2;
-		mr = 0.9;
-	    }
+//
+//	    if (Math.sqrt(Math.pow(Math.abs(side / 2 - col), 2)
+//		    + Math.pow(Math.abs(side / 2 - row), 2)) > 30) {
+//		m = config.mask2;
+//		changeRules = config.changeRules2;
+//		mr = 0.9;
+//	    }
 
 	    var cellDna = config.ruleCreator(m, 1, changeRules);
 	    if (config.autoInit && cellDna != null) {
@@ -726,184 +750,7 @@ CASimulation.prototype.onMouseDown = function(event) {
 	    Math.ceil(coords.x / currentConfig.cellSize) - 1,
 	    Math.ceil(coords.y / currentConfig.cellSize) - 1 ]);
 
-    console.log(JSON.stringify(cell.rule.dna));
-}
-
-function populateAutomata(automata) {
-    var config = automata.config;
-    var side = config.side;
-    var w = side;
-    var h = side;
-    var cs = config.cellSize;
-
-    var prev1 = new Array();
-    var prev2 = new Array();
-    var current = new Array();
-
-    var row = 0;
-    var col = 0;
-
-    var rowMax = 0;
-    var colMax = 0;
-    var colOffset = 0;
-    var count = 0;
-    var total = w * h;
-    var cell;
-    var p;
-    var k = 0;
-
-    while (++count <= total) {
-	p = new Point([ col, row ]);
-	var m = config.mask1;
-	var changeRules = config.changeRules1;
-	var mr = 0.7;
-	var opt = [ 0.8, 0.81, 0.9, 1, 1 ];
-
-	if (Math.sqrt(Math.pow(Math.abs(side / 2 - col), 2)
-		+ Math.pow(Math.abs(side / 2 - row), 2)) > 30) {
-	    m = config.mask2;
-	    changeRules = config.changeRules2;
-	    mr = 0.9;
-	}
-	var cellDna = new CellRuleDNA(m, 1, changeRules);
-	if (config.autoInit) {
-	    cellDna.init(config.maxNeighbors, mr, opt);
-	}
-
-	cell = new Cell(p, new Rectangle(cs, cs), new CellRule2(cellDna), 0);
-	if (config.useBurnMode) {
-	    cell.drawn = true;
-	}
-
-	var addprev2 = true;
-
-	if (col > 0) {
-	    var ind = k - 1;
-	    if (colOffset > 0) {
-		ind = col - colOffset;
-	    }
-	    // if(typeof prev1[ind] == 'undefined'){
-	    // alert("row: "+row+" col: "+col);
-	    // }
-	    cell.addNeighbor(prev1[ind]);
-	    prev1[ind].addNeighbor(cell);
-	    addprev2 = false;
-	}
-
-	if (col < colMax) {
-	    var ind = k;
-	    if (colOffset > 0) {
-		ind += 1;
-	    }
-	    cell.addNeighbor(prev1[ind]);
-	    prev1[ind].addNeighbor(cell);
-	    addprev2 = !addprev2;
-	}
-
-	if (k > 0) {
-	    cell.addNeighbor(current[k - 1]);
-	    current[k - 1].addNeighbor(cell);
-	}
-
-	if (addprev2 && k > 0) {
-	    var ind = k - 1;
-	    if (colOffset > 0) {
-		ind = col - colOffset;
-	    }
-	    if (colOffset > 1) {
-		ind += 1;
-	    }
-	    cell.addNeighbor(prev2[ind]);
-	    prev2[ind].addNeighbor(cell);
-	}
-
-	current.push(cell);
-
-	automata.addObject(cell);
-	row--;
-	col++;
-
-	if (row < 0 || col > colMax) {
-	    rowMax++;
-	    colMax++;
-	    if (rowMax >= h) {
-		rowMax = h - 1;
-		colOffset++;
-	    }
-
-	    if (colMax >= w) {
-		colMax = w - 1;
-	    }
-
-	    row = rowMax;
-	    col = colOffset;
-	    k = 0;
-
-	    prev2 = prev1;
-	    prev1 = current;
-	    current = new Array();
-	} else {
-	    k++;
-	}
-    }
-}
-
-function createAutomata(config) {
-
-    var ca = new CellularAutomata(2, config);
-
-    populateAutomata(ca);
-    return ca;
-
-}
-
-var interval;
-
-function startSimulation(canvas, config) {
-    console.log("Start simulaltion");
-    currentConfig = config;
-    var side = config.side;
-    var ctx = canvas.getContext("2d");
-    var width = side * config.cellSize;
-    ctx.clearRect(0, 0, width, width);
-
-    // ctx.width=side;
-    // ctx.height=side;
-    canvas.addEventListener('mousedown', mouseDownHandler, false);
-    canvas.addEventListener('mouseup', mouseUpHandler, false);
-
-    automata = createAutomata(config);
-    console.log("automata createad");
-    // automata.objects[(side * side + 1) / 2].state = 1;
-    // automata.objects[((side * side + 1) / 2) + 1].state = 1;
-
-    var output = new Array();
-    var input = new Array();
-    var mid = (side * side + 1) / 2 + side;
-
-    if (!config.autoInit) {
-	for (var i = mid - 100; i < mid + 100; i++) {
-	    // output.push(automata.objects[i]);
-	    // input.push(automata.objects[i + 4000]);
-	    if (config.autoSpark) {
-		automata.objects[i].state = 1;
-	    }
-	}
-    }
-
-    var simulator = new Simulator(automata, ctx);
-    var c = 0;
-
-    interval = setInterval(function() {
-
-	simulator.run();
-
-    }, 20);
-
-}
-
-function stopSimulation() {
-    clearInterval(interval);
+    console.log(JSON.stringify(cell.rule));
 }
 
 function readOutput(out) {

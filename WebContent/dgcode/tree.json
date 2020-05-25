@@ -1,0 +1,117 @@
+{
+/* We're creating a tree starting from one cell */
+"title":"Grow a tree",
+"desc":"We're growing a tree with roots and branches and leafs, starting from a seed cell.",
+/* types allow defining various cell types */
+	"types" : {
+	
+/* Defining a branch cell type */
+		"branch" : {
+		
+/* Here we define the parameters of cells that form the branches */
+			"params" : {
+			
+/* types with higher priority(smaller number) can overwrite types with lower priority ( bigger number ) */
+				"priority" : 0,
+				"type" : "branch",
+/* forking frequency - with what frequency (in generations) should the branches fork */
+				"FORKFQ" : 10,
+/* spin frequency - how ofter should the branches spin */
+				"SPINFQ" : 3,
+/* spin offset - how many generations should a brach cell wait before spinning */
+				"SPINO" : 10,
+/* growth period - the pace of growth ( replication ) in iterations*/
+				"GPER" : 10,
+/* max growth - how many generations should branches grow*/
+				"GMAX" : 45,
+/* thickness period - the pace of branches thickening */
+				"TPER" : 100,
+/* thicken limit - a limit for thickening function ( see below )*/
+				"THLIMIT" : 9000,
+/* constrain direction - branches shouldn't go into the ground */
+				"CDIR" : -1,
+/* leaf creation period - the pace of leaf creation */
+				"LCP" : 3,
+/* leaf creation age - at what age a branch cell should create a leaf */
+				"LCA" : 15
+		    }
+		},
+		
+/* defining cells that form the root */
+		"root" : {
+		    "params" : {
+			"type" : "root",
+/* define the cell color for this type */
+			"color" : "gray",
+			"FORKFQ" : 7,
+			"SPINFQ" : 4,
+			"SPINO" : 10,
+			"GPER" : 8,
+			"GMAX" : 35,
+			"TPER" : 100,
+			"CDIR" : 1,
+			"THLIMIT" : 7000
+			}
+		},
+		
+/* leaf cell type */
+		"leaf" : {
+		    "params" : {
+			"type" : "leaf",
+			"color" : "green",
+			"typeGen" : 0,
+/* if chainType is true, then, if a parent cell dies, all children die as well ( a leaf falls ) */ 			
+			"chainType" : true,
+			"GMAX" : 2,
+			"FORKFQ" : 4,
+			"SPINFQ" : 2,
+			"SPINO" : 1,
+			"GPER" : 4,
+/* setting a higher numer for the leaf priority so that branch cells that overwirte leaf cells ( leafs fall ) */
+			"priority" : 10
+		    }
+		}
+	    },
+
+/* genes permit cells to act in certain circumstances */
+	    "genes" : {
+	    
+/* defining an init gene */
+		"ginit" : {
+		
+/* each gene has an actvation condition that needs to be true */
+		    
+/* here we init the initial cell. C.A is the age of the cell and C.GG the generation of the cell */
+		    "cond" : "C.A==0 && C.GG==0",
+		    
+/* and some operations that are executed if the condition is fulfilled. See below all the possible operations */
+		    "ops" : "V.FORKFQ=10; V.SPINFQ=4; V.GPER=10; V.GMAX=45; V.TPER=100; V.THICKNESS=0; V.CDIR=-1;"
+		},
+
+/* A gene can be defined as a string with the condition and the operations sepparated by the -> operator, as the next gene */
+		
+/* This gene controls the birth of the first root cell. */
+		"croot" : "C.A==1 && C.GG==0 -> SRT('root'); SRM(4); R; SRM(-4); SRT('branch');",
+		
+/* Growth - This gene controls the growth for all types of cells */
+		"g0" : "V.THICKNESS==0 && C.A==V.GPER && C.TG < V.GMAX && (C.TG < 20 || ABS(RP.Y) > 10 )-> R;",
+		
+		
+/* Forking - this gene controls the forking */
+		"g1" : "V.THICKNESS==0 && C.GG>0 && C.GG % V.FORKFQ==0 && C.A==20 -> SRM(1); R; SRM(-2); R; SRM(1);",
+		
+/* Spin - this gene controls the spinning of the replication direction */
+		"g3" : {
+		     "cond": "V.THICKNESS==0 && C.GG > V.SPINO && C.GG % V.SPINFQ==0 && C.A==0",
+		      "ops": "V.SPINDIR=(ROUND(C.GD*RAND)+C.GG/V.SPINFQ)%3-1; SRM(V.SPINDIR);"   
+		},
+		
+/* Thickness - this gene controls the thickening of branches and roots */
+		"g4" :{
+			"cond":"C.A > 0 && C.A % V.TPER == 0 && (RP.Y * V.CDIR > 0) && ((1+6*C.GG)*(1+0.4*C.A)*(1+V.THICKNESS) < V.THLIMIT)",
+			"ops":"V.THICKNESS=V.THICKNESS+1; SRM(3); R; V.THICKNESS=V.THICKNESS-1;"
+		}, 
+/* Leaf creation */
+		"cleaf" : "C.T == 'branch' && V.THICKNESS < 1 && C.A == V.LCA && (C.GG % V.LCP == 0) -> SRT('leaf'); SRM(1); R; SRM(-2); R; SRT('branch'); SRM(1);"
+	    }
+	}
