@@ -385,7 +385,7 @@ Your browser does not support the HTML5 canvas tag.
 		selExId = id;
 	    } 
 
-	    opt.click(onSelection);
+// 	    opt.click(onSelection);
 
 	    loaded++;
 
@@ -393,6 +393,8 @@ Your browser does not support the HTML5 canvas tag.
 		$("#examples").val(selExId);
 		prepareExample(selExId);
 		run();
+		
+		$("#examples").change(onSelection);
 	    }
 	}
 
