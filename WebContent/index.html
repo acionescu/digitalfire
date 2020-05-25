@@ -251,100 +251,12 @@ Your browser does not support the HTML5 canvas tag.
 
 	}
 
-	var treeConfig = {
-	    types : {
-		"branch" : {
-		    params : {
-			/* types with higher priority(smaller number) can overwrite types with lower priority ( bigger number ) */
-			priority : 0,
-			"type" : "branch",
-			/* forking frequency */
-			"FORKFQ" : 10,
-			/* spin frequency */
-			"SPINFQ" : 3,
-			/* spin offset */
-			"SPINO" : 10,
-			/* growth period */
-			"GPER" : 10,
-			/* max growth */
-			"GMAX" : 45,
-			/* thickness period */
-			"TPER" : 100,
-			/* thicken limit */
-			"THLIMIT" : 9000,
-			/* constrain direction */
-			"CDIR" : -1,
-			/* leaf creation period */
-			"LCP" : 3,
-			/* leaf creation age */
-			"LCA" : 15
-		    }
-		},
-		"root" : {
-		    params : {
-			"type" : "root",
-			color : 'gray',
-			"FORKFQ" : 7,
-			"SPINFQ" : 4,
-			"SPINO" : 10,
-			"GPER" : 8,
-			"GMAX" : 35,
-			"TPER" : 100,
-			"CDIR" : 1,
-			"THLIMIT" : 7000
-		    }
-		},
-		"leaf" : {
-		    params : {
-			"type" : "leaf",
-			color : 'green',
-			typeGen : 0,
-			chainType : true,
-			"GMAX" : 2,
-			"FORKFQ" : 4,
-			"SPINFQ" : 2,
-			"SPINO" : 1,
-			"GPER" : 4,
-			priority : 10
-		    }
-		}
-	    },
-
-	    genes : {
-		"ginit" : {
-		    "cond" : "C.A==0 && C.GG==0",
-		    "ops" : "V.FORKFQ=10; V.SPINFQ=4; V.GPER=10; V.GMAX=45; V.TPER=100; V.THICKNESS=0; V.CDIR=-1;"
-		},
-		"croot" : "C.A==1 && C.GG==0 -> SRT('root'); SRM(4); R; SRM(-4); SRT('branch');",
-		/* growth */
-		"g0" : "V.THICKNESS==0 && C.A==V.GPER && C.TG < V.GMAX && (C.TG < 20 || ABS(RP.Y) > 10 )-> R;",
-		/* forking */
-		"g1" : "V.THICKNESS==0 && C.GG>0 && C.GG % V.FORKFQ==0 && C.A==20 -> SRM(1); R; SRM(-2); R; SRM(1);",
-		/* spin */
-		"g3" : {
-		    "cond" : "V.THICKNESS==0 && C.GG > V.SPINO && C.GG % V.SPINFQ==0 && C.A==0",
-		    "ops" : "V.SPINDIR=(ROUND(C.GD*RAND)+C.GG/V.SPINFQ)%3-1; SRM(V.SPINDIR);"
-		},
-		/* thickness */
-		"g4" : "C.A > 0 && C.A % V.TPER == 0 && (RP.Y * V.CDIR > 0) && ((1+6*C.GG)*(1+0.4*C.A)*(1+V.THICKNESS) < V.THLIMIT) -> V.THICKNESS=V.THICKNESS+1; SRM(3); R; V.THICKNESS=V.THICKNESS-1;",
-		"cleaf" : "C.T == 'branch' && V.THICKNESS < 1 && C.A == V.LCA && (C.GG % V.LCP == 0) -> SRT('leaf'); SRM(1); R; SRM(-2); R; SRT('branch'); SRM(1);"
-	    }
-	};
-
-	var testConf = {
-	    "types" : {},
-	    "genes" : {
-		"ginit" : "C.GG==0 && C.A==0 -> V.STEP=30; V.A=-1; V.RC=0; V.color='yellow'; V.priority=10;",
-		"g0" : "V.RC==C.GG && C.A==0 && V.STEP > 0 -> V.LIFE=(2); V.STEP=(V.STEP+V.A); V.RC=V.RC+1; R; ",
-		"g1" : "V.RC==(C.GG ) && C.A==0 && V.STEP == 0 -> V.A=1; V.STEP=1; SRM(4); V.RC=V.RC+1; V.priority=5; R; ",
-		"g2" : "C.A >= V.LIFE || C.A >= (V.STEP+1) -> DIE;"
-	    }
-	};
+	
 
 	// 	$("#dnaConfig").val(JSON.stringify(testConf, null, '\t'));
-	$("#dnaConfig").load("dgcode/updown.json", function(d) {
-	    $("#dnaConfig").val(d);
-	});
+// 	$("#dnaConfig").load("dgcode/updown.json", function(d) {
+// 	    $("#dnaConfig").val(d);
+// 	});
 
 	var exFiles = [ "tree.json", "updown.json", "spiral.json", "snake.json" ];
 	var exConf = {};
