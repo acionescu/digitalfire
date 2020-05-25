@@ -1,6 +1,6 @@
 {
 "title": "Spiraling snake",
-"desc":"Creates a snake like creature spirialing away.",
+"desc":"Creates a snake like creature spiraling away.",
 	"types": {},
 	"genes": {
                 "ginit":"C.GG==0 && C.A==0 -> V.STEP=3;",
