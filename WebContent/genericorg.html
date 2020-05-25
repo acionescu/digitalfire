@@ -41,7 +41,7 @@ Your browser does not support the HTML5 canvas tag.
 				<div class="mediumControls">
 					Config:<br>
 					<textarea rows="40" cols="85" name="dnaConfig" id="dnaConfig"
-						style="padding: 10px; margin: 0;"></textarea>
+						style="padding: 10px; margin: 0; background: lightgray;"></textarea>
 				</div>
 				<br> <br>
 
@@ -112,7 +112,7 @@ Your browser does not support the HTML5 canvas tag.
 				activation function ( a certain set of conditions that need to be
 				fulfilled), and a set of operations that are executed if its
 				activation function returns true. See the example to understand how
-				this works.</p>
+				this works. The text between <span class="code">/* ... */</span> is ignored.</p>
 
 			<p>The most important operations are:
 			
@@ -382,17 +382,16 @@ Your browser does not support the HTML5 canvas tag.
 		conf : conf
 	    };
 
-	    if (loaded == 0 && selExId == null) {
+	    if (fName == exFiles[0] && selExId == null) {
 		selExId = id;
-	    } else {
-		$("#examples").val(selExId);
-	    }
+	    } 
 
 	    opt.click(onSelection);
 
 	    loaded++;
 
 	    if (loadAttempts == exFiles.length) {
+		$("#examples").val(selExId);
 		prepareExample(selExId);
 		run();
 	    }

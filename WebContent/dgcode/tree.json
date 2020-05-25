@@ -1,7 +1,7 @@
 {
-/* We're creating a tree starting from one cell */
 "title":"Grow a tree",
 "desc":"We're growing a tree with roots and branches and leafs, starting from a seed cell.",
+
 /* types allow defining various cell types */
 	"types" : {
 	
@@ -16,7 +16,7 @@
 				"type" : "branch",
 /* forking frequency - with what frequency (in generations) should the branches fork */
 				"FORKFQ" : 10,
-/* spin frequency - how ofter should the branches spin */
+/* spin frequency - how often should the branches spin */
 				"SPINFQ" : 3,
 /* spin offset - how many generations should a brach cell wait before spinning */
 				"SPINO" : 10,
@@ -28,7 +28,7 @@
 				"TPER" : 100,
 /* thicken limit - a limit for thickening function ( see below )*/
 				"THLIMIT" : 9000,
-/* constrain direction - branches shouldn't go into the ground */
+/* constraint direction - branches shouldn't go into the ground */
 				"CDIR" : -1,
 /* leaf creation period - the pace of leaf creation */
 				"LCP" : 3,
@@ -67,7 +67,7 @@
 			"SPINFQ" : 2,
 			"SPINO" : 1,
 			"GPER" : 4,
-/* setting a higher numer for the leaf priority so that branch cells that overwirte leaf cells ( leafs fall ) */
+/* setting a higher numer for the leaf priority so that branch cells can overwrite leaf cells ( leafs fall ) */
 			"priority" : 10
 		    }
 		}
@@ -84,13 +84,13 @@
 /* here we init the initial cell. C.A is the age of the cell and C.GG the generation of the cell */
 		    "cond" : "C.A==0 && C.GG==0",
 		    
-/* and some operations that are executed if the condition is fulfilled. See below all the possible operations */
+/* Here we define the operations that are executed if the condition is fulfilled. See the documentation for all the possible operations */
 		    "ops" : "V.FORKFQ=10; V.SPINFQ=4; V.GPER=10; V.GMAX=45; V.TPER=100; V.THICKNESS=0; V.CDIR=-1;"
 		},
 
 /* A gene can be defined as a string with the condition and the operations sepparated by the -> operator, as the next gene */
 		
-/* This gene controls the birth of the first root cell. */
+/* This gene controls the birth of the first root cell and first branch cell */
 		"croot" : "C.A==1 && C.GG==0 -> SRT('root'); SRM(4); R; SRM(-4); SRT('branch');",
 		
 /* Growth - This gene controls the growth for all types of cells */
