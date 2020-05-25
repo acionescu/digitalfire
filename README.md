@@ -1,4 +1,4 @@
-####Intro
+### Intro
 
 This is a project that uses cellular automata simulations to generate interesting effects.
 
