@@ -45,6 +45,7 @@
 	display: block;
 	border: thin solid grey;
 	padding: 10px;
+	overflow:hidden;
 }
 
 .mediumControls {

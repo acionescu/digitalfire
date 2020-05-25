@@ -1,6 +1,6 @@
 {
 "title":"Grow a tree",
-"desc":"We're growing a tree with roots and branches and leafs, starting from a seed cell.",
+"desc":"We're growing a tree with roots and branches and leafs, starting from a seed cell. This explores the possibilty that organisms development is just the result of cells multiplying according to simple geometric patterns.",
 
 /* types allow defining various cell types */
 	"types" : {

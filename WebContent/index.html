@@ -18,15 +18,15 @@
 
 
 	<div class="displayArea">
-		<div style="display: inline-block; float: left; max-width: 505;">
+		<div style="display: inline-block; float: left; max-width: 505; height:auto;">
 			<canvas id="myCanvas" width="505" height="505" class="drawArea">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
 			<div id="general"
-				style="clear: left; display: block; margin-top: 20px; padding-top: 10px;">
+				style="clear: left; display: block; margin-top: 20px; padding-top: 10px; overflow:hidden; height:auto;">
 				<input type="button" value="Restart" onclick="run()">
 
-				<div style="margin-top: 10px; overflow: hidden;">
+				<div style="margin-top: 10px; height: auto; overflow: hidden; display:block;">
 					<label for="examples">Examples:</label> <select id="examples">
 
 					</select>
@@ -34,7 +34,9 @@ Your browser does not support the HTML5 canvas tag.
 						style="margin-top: 10px; padding: 5px; max-width: 505px;"></div>
 				</div>
 			</div>
+			
 		</div>
+		
 		<div id="controls" class="controls" styles="width:100%;">
 			<div class="dyn-form" styles="width:100%;">
 

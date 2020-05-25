@@ -1,6 +1,6 @@
 {
 "title":"Up and down",
-"desc": "Simulates an object that is thrown up and comes back down.",
+"desc": "Simulates an object that is thrown up and comes back down. This explores the possibility that, if movement is just changing states of space, then, the higher the speed, the more cells an 'object' will occupy. So it's not distances that shrink, as theory of relativity states, but faster objects that expand.",
 	"types": {
 		
 	},
