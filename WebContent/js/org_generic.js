@@ -90,7 +90,6 @@ function DNAEvalEngine() {
 	    usage: "C.TG",
 	    regexp:"C\\.TG",
 	    proc: function(match){
-		console.log("match type gen: "+match);
 		return "cell.rule.dna.params.typeGen";
 	    }
 	    
@@ -191,7 +190,7 @@ function DNAEvalEngine() {
 		    }
 		    else{
 			if(sdna.params.priority < t.rule.dna.params.priority){
-			    console.log("replication failed "+sdna.params.priority +" "+t.rule.dna.params.priority);
+//			    console.log("replication failed "+sdna.params.priority +" "+t.rule.dna.params.priority);
 			}
 		    }
 		});

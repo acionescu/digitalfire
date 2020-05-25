@@ -364,12 +364,12 @@ Your browser does not support the HTML5 canvas tag.
 	}
 
 	var onFileLoad = function(fName, data) {
-	    console.log("file loaded " + fName);
+// 	    console.log("file loaded " + fName);
 	    /* remove comments */
 	    var conf = JSON.parse(data.replace(new RegExp("/?\\*.*\\*/", 'g'),
 		    ""));
 
-	    console.log("add title " + conf.title);
+// 	    console.log("add title " + conf.title);
 	    var id = fName.split(".")[0];
 	    var opt = $("<option>").val(id).html(conf.title);
 

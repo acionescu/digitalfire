@@ -201,13 +201,11 @@ function delegate(scope, method) {
 	    args.push(arguments[i]);
 	}
 	return function() {
-	    console.log("delegate with arguments " + arguments);
 	    return method.apply(scope, args);
 	}
     } else {
 
 	return function() {
-	    console.log("delegate with arguments " + arguments);
 	    return method.apply(scope, arguments);
 	}
     }
@@ -744,7 +742,6 @@ CASimulation.prototype.stopSimulation = function() {
 }
 
 CASimulation.prototype.onMouseDown = function(event) {
-    console.log("event=" + event);
     var coords = relMouseCoords(event);
     var cell = this.automata.getObjectByCoords([
 	    Math.ceil(coords.x / currentConfig.cellSize) - 1,
