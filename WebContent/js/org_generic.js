@@ -34,8 +34,8 @@ function DNAEvalEngine() {
     this.scopes = [
     {
 	"READV" : {
-	    desc: "Read a custom variable",
-	    usage: "V.<variable name>",
+	    desc: "Reads a custom variable.",
+	    usage: "V.&lt;variable name&gt;",
 	    regexp: "V\\.\\w*",
 	    proc: function(match){
 		var name = match.substring(2);
@@ -105,7 +105,7 @@ function DNAEvalEngine() {
 	},
 	/* growth direction */
 	"C.GD" : {
-	    desc: "The direction in which the cell grown from the parent. A value from 0 to 7. See cell neighbors.",
+	    desc: "The direction in which the cell grows from the parent. A value from 0 to 7. See cell neighbors.",
 	    usage: "C.GD",
 	    regexp:"C\\.GD",
 	    proc: function(match){
@@ -121,7 +121,7 @@ function DNAEvalEngine() {
 	},
 	/* to what type should this cell replicate ( defaults to cell's type ) */
 	"C.RT" : {
-	    desc: "To what type should a cell replicate - The type of the child cell will be set to this.",
+	    desc: "The type of the offspring cells.",
 	    usage: "C.RT",
 	    regexp:"C\\.RT",
 	    proc: function(match){
@@ -138,7 +138,7 @@ function DNAEvalEngine() {
 	    }
 	},
 	"RP.X" : {
-	    desc: "The x coordinate of the relative position of the cell from the original cell.",
+	    desc: "The X coordinate relative to the original cell position.",
 	    usage: "RP.X",
 	    regexp:"RP\\.X",
 	    proc: function(match){
@@ -146,7 +146,7 @@ function DNAEvalEngine() {
 	    }
 	},
 	"RP.Y" : {
-	    desc: "The y coordinate of the relative position of the cell from the original cell.",
+	    desc: "The Y coordinate relative to the original cell position.",
 	    usage: "RP.Y",
 	    regexp:"RP\\.Y",
 	    proc: function(match){
@@ -163,7 +163,7 @@ function DNAEvalEngine() {
     this.ops = {
 	/* replication operation */
 	"R;" : {
-	    desc: "Replication function. In replicates the current cell according to its internal state. Relevant parameters are the replication direction and the replication type.",
+	    desc: "Replication function. Replicates the current cell according to its internal state. Relevant parameters are the replication direction and the replication type.",
 	    usage: "R;",
 	    op : function(cell) {
 
@@ -199,7 +199,7 @@ function DNAEvalEngine() {
 	},
 	/* set replication type */
 	"SRT" : {
-	    desc: "Sets the replication type of the cell. This is used during the replication operation to set the type of the child cell.",
+	    desc: "Sets the replication type of the cell. This is used during the replication operation to set the type of the offspring cell.",
 	    usage: "SRT(&lt;a predefined cell type&gt;);",
 	    regex:"SRT\\((.*?;)",
 	    proc: function(match,offset,string){

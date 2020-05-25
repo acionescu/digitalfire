@@ -54,4 +54,4 @@ The main things that the user can control are:
 * the `genes` that control cell behavior
 
 
-See some simulations and the documentation [here](https://github.com/acionescu/digitalfire/generigorg.html).
+See some simulations and the documentation [here](https://acionescu.github.io/digitalfire/WebContent/).
