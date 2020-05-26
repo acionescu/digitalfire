@@ -75,7 +75,7 @@ function OrgCellRuleDNA(mask, maskSpin, changeRules) {
 	"defg" : new CellGene(
 	/* for all cells */
 	function(cell) {
-	    return true;
+	    return cell.age==0;
 	},
 	/* operation */
 	function(cell) {
