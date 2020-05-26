@@ -13,20 +13,22 @@
 
 <link rel="stylesheet" href="./css/ca.css">
 
+
 </head>
 <body>
 
-
 	<div class="displayArea">
-		<div style="display: inline-block; float: left; max-width: 505; height:auto;">
+		<div
+			style="display: inline-block; float: left; max-width: 505; height: auto;">
 			<canvas id="myCanvas" width="505" height="505" class="drawArea">
 Your browser does not support the HTML5 canvas tag.
 </canvas>
 			<div id="general"
-				style="clear: left; display: block; margin-top: 20px; padding-top: 10px; overflow:hidden; height:auto;">
+				style="clear: left; display: block; margin-top: 20px; padding-top: 10px; overflow: hidden; height: auto;">
 				<input type="button" value="Restart" onclick="run()">
 
-				<div style="margin-top: 10px; height: auto; overflow: hidden; display:block;">
+				<div
+					style="margin-top: 10px; height: auto; overflow: hidden; display: block;">
 					<label for="examples">Examples:</label> <select id="examples">
 
 					</select>
@@ -34,9 +36,9 @@ Your browser does not support the HTML5 canvas tag.
 						style="margin-top: 10px; padding: 5px; max-width: 505px;"></div>
 				</div>
 			</div>
-			
+
 		</div>
-		
+
 		<div id="controls" class="controls" styles="width:100%;">
 			<div class="dyn-form" styles="width:100%;">
 
@@ -63,7 +65,7 @@ Your browser does not support the HTML5 canvas tag.
 				rules that control its state and behavior ( color, replication,
 				state (on/off), etc ). The "program" that the cells execute can be
 				defined in the area to the right, via a metalanguage similar to the
-				genetic code of real cells.</p>
+				genetic code of real cells. The source code is <a href="https://github.com/acionescu/digitalfire">here.</a></p>
 
 			<h3>How a cell works</h3>
 
@@ -83,11 +85,13 @@ Your browser does not support the HTML5 canvas tag.
 				y: 40, and another one at position x: 30, and y -20, you can add
 				this to the configuration: { ... "setup":{ "cells":[ { "pos":
 				[20,40], "type":"add a type defined by you" }, { "pos": [30,-20] } ]
-				} ... }</pre>
-				
-				As you can see, besides the position, you can specify a custom type of the cell, defined via the <span
-				class="code">types</span> parameter of the configuration.
-				</p>
+				} ... }
+			</pre>
+
+			As you can see, besides the position, you can specify a custom type
+			of the cell, defined via the <span class="code">types</span>
+			parameter of the configuration.
+			</p>
 
 			<p>
 				The default replication direction of the original cell is straight
@@ -108,28 +112,28 @@ Your browser does not support the HTML5 canvas tag.
 
 			<h4>Cell's properties and operations</h4>
 
-			<p>To program cells to do something, one needs to define genes in
-				the <span class="code">genes</span> section of the configuration. Each gene has an
-				activation function ( a certain set of conditions that need to be
-				fulfilled), and a set of operations that are executed if its
+			<p>
+				To program cells to do something, one needs to define genes in the <span
+					class="code">genes</span> section of the configuration. Each gene
+				has an activation function ( a certain set of conditions that need
+				to be fulfilled), and a set of operations that are executed if its
 				activation function returns true. See the example to understand how
-				this works. The text between <span class="code">/* ... */</span> is ignored.</p>
+				this works. The text between <span class="code">/* ... */</span> is
+				ignored.
+			</p>
 
 			<p>The most important operations are:
-			
 			<ul>
 				<li><a href="#R;">Replication(R;)</a> - the cell will clone
 					itself to an empty neighboring cell
-				
-				<li><a href="#SRM">Replication direction spin(SRM)</a> - rotates the direction of replication
-				
-				<li><a href="#SRT">Set replication type(SRT)</a> - sets a new type for the child cell
-			
+				<li><a href="#SRM">Replication direction spin(SRM)</a> -
+					rotates the direction of replication
+				<li><a href="#SRT">Set replication type(SRT)</a> - sets a new
+					type for the child cell
 			</ul>
 			</p>
 
 			<p>Most important properties:
-			
 			<ul>
 				<li><a href="#C.A">Cell's age(C.A)</a> - The number of
 					iterations since the cell was born.</li>
@@ -138,12 +142,12 @@ Your browser does not support the HTML5 canvas tag.
 				<li><a href="#C.TG">Cell's type generation(C.TG)</a> - The
 					number of ancestors of this cell's type</li>
 				<li><a href="#C.T">Cell's type(C.T)</a> - The type of this cell</li>
-				<li><a href="#RP.X">Cell's horizontal coordinate relative to the
-						original cell(RP.X)</a> - The original cell's X is 0.
-					Decreases to the left, increases to the right.</li>
-				<li><a href="#RP.Y">Cell's vertical coordinate relative to the
-						original cell(RP.Y)</a> - The original cell's Y is 0.
-					Decreases upwards, increases downwards.</li>
+				<li><a href="#RP.X">Cell's horizontal coordinate relative
+						to the original cell(RP.X)</a> - The original cell's X is 0. Decreases
+					to the left, increases to the right.</li>
+				<li><a href="#RP.Y">Cell's vertical coordinate relative to
+						the original cell(RP.Y)</a> - The original cell's Y is 0. Decreases
+					upwards, increases downwards.</li>
 			</ul>
 			</p>
 
@@ -251,12 +255,10 @@ Your browser does not support the HTML5 canvas tag.
 
 	}
 
-	
-
 	// 	$("#dnaConfig").val(JSON.stringify(testConf, null, '\t'));
-// 	$("#dnaConfig").load("dgcode/updown.json", function(d) {
-// 	    $("#dnaConfig").val(d);
-// 	});
+	// 	$("#dnaConfig").load("dgcode/updown.json", function(d) {
+	// 	    $("#dnaConfig").val(d);
+	// 	});
 
 	var exFiles = [ "tree.json", "updown.json", "spiral.json", "snake.json" ];
 	var exConf = {};
@@ -278,12 +280,12 @@ Your browser does not support the HTML5 canvas tag.
 	}
 
 	var onFileLoad = function(fName, data) {
-// 	    console.log("file loaded " + fName);
+	    // 	    console.log("file loaded " + fName);
 	    /* remove comments */
 	    var conf = JSON.parse(data.replace(new RegExp("/?\\*.*\\*/", 'g'),
 		    ""));
 
-// 	    console.log("add title " + conf.title);
+	    // 	    console.log("add title " + conf.title);
 	    var id = fName.split(".")[0];
 	    var opt = $("<option>").val(id).html(conf.title);
 
@@ -295,9 +297,9 @@ Your browser does not support the HTML5 canvas tag.
 
 	    if (fName == exFiles[0] && selExId == null) {
 		selExId = id;
-	    } 
+	    }
 
-// 	    opt.click(onSelection);
+	    // 	    opt.click(onSelection);
 
 	    loaded++;
 
@@ -305,7 +307,7 @@ Your browser does not support the HTML5 canvas tag.
 		$("#examples").val(selExId);
 		prepareExample(selExId);
 		run();
-		
+
 		$("#examples").change(onSelection);
 	    }
 	}
@@ -322,8 +324,6 @@ Your browser does not support the HTML5 canvas tag.
 		    console.log("Failed loading file " + fName
 			    + " with error: " + e);
 		}
-
-		
 
 	    }, 'text');
 
