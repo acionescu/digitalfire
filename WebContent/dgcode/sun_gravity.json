@@ -1,0 +1,27 @@
+{
+"title":"Burning sun with gravity",
+"desc": "The burning sun example, but with the illustration of the gravity field.",
+
+			"genes": {
+			    "ginit":"C.A < 7 && C.GG < 100 -> V.color='yellow';OFF; R; SRM(1);",
+                             "r1" : "C.A == 1 && (RP.X*RP.X + RP.Y*RP.Y) < 900 ->  ON; V.CR=['0','0','i','0','0','i','0','1','0']; SCR(V.CR); SNM([1,1,1,0,1,1,1,1]);",
+                               "r2" : "C.A == 1 && (RP.X*RP.X + RP.Y*RP.Y) >= 900 ->  OFF; V.CR=['0','0','i','0','i','1','1','0','i']; SCR(V.CR); SNM([1,1,1,0,1,1,1,0]);",
+
+                             "rop": "C.A > 1 -> CHANGE; RNM(1); V.GRA=C.G;",
+		"con1": "C.A > 1  && C.G > 0.000000000001 -> V.offColor='#111100'; ",
+		"con2": "C.A > 1  && C.G > 0.00000000001 -> V.offColor='#222200'; ",
+		"con3": "C.A > 1  && C.G > 0.0000000001 -> V.offColor='#333300'; ",
+		"con4": "C.A > 1  && C.G > 0.000000001 -> V.offColor='#444400'; ",
+		"con5": "C.A > 1  && C.G > 0.00000001 -> V.offColor='#555500'; ",
+		"con6": "C.A > 1  && C.G > 0.0000001 -> V.offColor='#666600'; ",
+		"con7": "C.A > 1  && C.G > 0.000001 -> V.offColor='#777700'; ",
+		"con8": "C.A > 1  && C.G > 0.00001 -> V.offColor='#888800'; ",
+		"con9": "C.A > 1 && C.G >  0.0001 -> V.offColor='#999900'; ",
+		"con10": "C.A > 1 && C.G > 0.001 -> V.offColor='#aaaa00'; ",
+		"con11": "C.A > 1 && C.G > 0.01 -> V.offColor='#bbbb00'; ",
+		"con12": "C.A > 1 && C.G > 0.1 -> V.offColor='#cccc00'; ",
+                "con13": "C.A > 1 && C.G > 1 -> V.offColor='#dddd00'; ",
+                "con14": "C.A > 1 && C.G > 10 -> V.offColor='#eeeeee'; ",
+		"coff": "C.A > 1 && C.GG > 0 && C.G <= 0.000000000001 -> V.offColor='black'; "
+		}
+}

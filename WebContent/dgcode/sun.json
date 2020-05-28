@@ -1,6 +1,6 @@
 {
 "title":"Burning sun",
-"desc": "Creates a burning sun effect. Black spots, solar flares, the burning effect, an occasional 'radiation' spit - you've got them all, with a few simple rules.'",
+"desc": "Creates a burning sun effect. Black spots, solar flares, the burning effect, an occasional 'radiation' spit - you've got them all, with a few simple rules.",
 
 			"genes": {
 			    "ginit":"C.A < 7 && C.GG < 100 -> V.color='yellow';OFF; R; SRM(1);",
