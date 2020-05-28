@@ -1,25 +1,25 @@
 /*******************************************************************************
- *MIT License
- *
- *Copyright (c) 2020 Adrian Cristian Ionescu
- *
- *Permission is hereby granted, free of charge, to any person obtaining a copy
- *of this software and associated documentation files (the "Software"), to deal
- *in the Software without restriction, including without limitation the rights
- *to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *copies of the Software, and to permit persons to whom the Software is
- *furnished to do so, subject to the following conditions:
- *
- *The above copyright notice and this permission notice shall be included in all
- *copies or substantial portions of the Software.
- *
- *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *SOFTWARE.
+ * MIT License
+ * 
+ * Copyright (c) 2020 Adrian Cristian Ionescu
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  ******************************************************************************/
 function CellGene(cond, op) {
     this.condition = cond;
@@ -75,22 +75,39 @@ function OrgCellRuleDNA(mask, maskSpin, changeRules) {
 	"defg" : new CellGene(
 	/* for all cells */
 	function(cell) {
-	    return cell.age==0;
+	    return cell.age == 0;
 	},
 	/* operation */
 	function(cell) {
 	    var cdna = cell.rule.dna;
-	    
+
 	    if (cdna.params.color != null) {
 		cell.color = cdna.params.color;
 	    }
 	    /* turn on */
 	    cdna.setStateOn(cell);
-	})
+	}),
+	"cupdate" :new CellGene(
+		/* for all cells */
+		function(cell) {
+		    return true;
+		},
+		/* operation */
+		function(cell) {
+		    var cdna = cell.rule.dna;
+
+		    if (cdna.params.color != null) {
+			cell.color = cdna.params.color;
+		    }
+		    
+		    if(cdna.params.offColor != null){
+			cell.offColor=cdna.params.offColor;
+		    }
+		})
     };
-    
+
     /* here can be stored configuration params for various cell types */
-    this.types={};
+    this.types = {};
 }
 
 OrgCellRuleDNA.prototype = new CellRuleDNA();
@@ -118,31 +135,32 @@ OrgCellRuleDNA.prototype.clone = function(callback) {
 }
 
 OrgCellRuleDNA.prototype.reset = function(cell) {
-    if(cell == null){
+    if (cell == null) {
 	return;
     }
-    
+
     /* override target cell */
     var cdna = cell.rule.dna;
-    
-    cell.drawn=false;
+
+    cell.drawn = false;
     /* reset age as well */
-    cell.age=0;
-    
-    if(cdna == null){
+    cell.age = 0;
+
+    if (cdna == null) {
 	return;
     }
-    
+
     cdna.setStateOff(cell);
     cell.rule["dna"] = null;
-   
 
     if (cdna.params.chainType) {
 
 	for ( var i in cell.neighbors) {
 	    var n = cell.neighbors[i];
 	    if (n != null && n.rule.dna != null
-		    && n.rule.dna.params.type == cdna.params.type && n.rule.dna.params.growthDir == i && (n.rule.dna.params.typeGen - cdna.params.typeGen) == 1) {
+		    && n.rule.dna.params.type == cdna.params.type
+		    && n.rule.dna.params.growthDir == i
+		    && (n.rule.dna.params.typeGen - cdna.params.typeGen) == 1) {
 		n.rule.dna.reset(n);
 	    }
 	}
@@ -168,11 +186,11 @@ OrgCellRuleDNA.prototype.replicate = function(sourceCell, direction, callback) {
 	return null;
     }
     /* reset age */
-    t.age=0;
-    t.drawn=false;
+    t.age = 0;
+    t.drawn = false;
     /* set state to parent state */
-    t.state=sourceCell.state;
-    
+    t.state = sourceCell.state;
+
     /* increase generation */
     replica.gen = this.gen + 1;
 
@@ -184,7 +202,7 @@ OrgCellRuleDNA.prototype.replicate = function(sourceCell, direction, callback) {
 
     /* compute relative position for the replica */
     replica.relPos = this.relPos.add(Cell.META.dirToCoords[direction]);
-    
+
     /* mark the replica cell as changed */
     t.hasChanged(sourceCell);
 
@@ -217,39 +235,46 @@ OrgCellRuleDNA.prototype.doReplication = function(cell, callback) {
 /**
  * Initializes params acording to the given type
  */
-OrgCellRuleDNA.prototype.setupType=function(type){
-    if(type == null){
+OrgCellRuleDNA.prototype.setupType = function(type) {
+    if (type == null) {
 	return;
     }
     var typeDef = this.types[type];
-    
-    if(typeDef == null){
+
+    if (typeDef == null) {
+	console.log("Unknown type "+type);
 	return;
     }
     
-    this.params={
-		/* color of the cell */
-		color : 'yellow',
-		/*
-		 * priority of this cell type. Types with higher priority can override
-		 * lower priority types
-		 */
-		priority : 0,
-		/* type of this cell */
-		type : type,
-		/* a particular cell type generation */
-		typeGen : 0,
-		/*
-		 * this type creates a chain structure, where, if one cell is changed (
-		 * e.g. dies ), it affects the others as well
-		 */
-		chainType : false
-	    }
+    var tDefParams = typeDef.params;
     
-    for(var pn in typeDef){
-	this.params[pn] = typeDef[pn];
+    if(tDefParams == null){
+	return;
     }
-    
+
+    this.params = {
+	/* color of the cell */
+	color : 'yellow',
+	/*
+	 * priority of this cell type. Types with higher priority can override
+	 * lower priority types
+	 */
+	priority : 0,
+	/* type of this cell */
+	type : type,
+	/* a particular cell type generation */
+	typeGen : 0,
+	/*
+	 * this type creates a chain structure, where, if one cell is changed (
+	 * e.g. dies ), it affects the others as well
+	 */
+	chainType : false
+    }
+
+    for ( var pn in tDefParams) {
+	this.params[pn] = tDefParams[pn];
+    }
+
 }
 
 /**

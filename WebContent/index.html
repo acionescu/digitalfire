@@ -244,6 +244,7 @@ Your browser does not support the HTML5 canvas tag.
 		    var dna = new GenericDNA(dgConf);
 		    if (cDef.type != null) {
 			dna.setupType(cDef.type);
+			console.log("setup type "+cDef.type +" "+dna.params.PER);
 		    }
 		    cell.rule = new CellRule2(dna);
 		}
@@ -260,7 +261,7 @@ Your browser does not support the HTML5 canvas tag.
 	// 	    $("#dnaConfig").val(d);
 	// 	});
 
-	var exFiles = [ "tree.json", "updown.json", "spiral.json", "snake.json","sun.json" ];
+	var exFiles = [ "tree.json","sun.json", "gravity.json", "updown.json", "spiral.json", "snake.json" ];
 	var exConf = {};
 	var loaded = 0;
 	var loadAttempts = 0;

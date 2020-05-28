@@ -155,6 +155,14 @@ function DNAEvalEngine() {
 		    proc : function(match) {
 			return "cell.rule.dna.relPos.y()";
 		    }
+		},
+		"C.G" : {
+		    desc : "Cell's gravity",
+		    usage : "C.G",
+		    regexp : "C\\.G",
+		    proc : function(match) {
+			return "cell.g";
+		    }
 		}
 	    }, {
 
@@ -323,6 +331,7 @@ function DNAEvalEngine() {
 	    regexp : "ON;",
 	    op : function(cell) {
 		cell.rule.dna.setStateOn(cell);
+//		cell.color = cell.rule.dna.params.color;
 		cell.drawn = false;
 	    }
 	},
@@ -332,6 +341,7 @@ function DNAEvalEngine() {
 	    regexp : "OFF;",
 	    op : function(cell) {
 		cell.rule.dna.setStateOff(cell);
+//		cell.offColor=cell.rule.dna.params.offColor;
 		cell.drawn = false;
 	    }
 	},
@@ -340,18 +350,21 @@ function DNAEvalEngine() {
 	    usage : "FLIP;",
 	    regexp : "FLIP;",
 	    op : function(cell) {
-		cell.rule.dna.setStateOff(cell);
+		cell.rule.dna.setInverseState(cell);
 		cell.drawn = false;
+//		if(cell.state){
+//		    cell.color = cell.rule.dna.params.color;
+//		}
 	    }
 	},
 	"SNM" : {
 	    desc : "Sets the cell neighbors mask array. Each position of the array addresses a neighbor. Set the value 1 to consider that neighbor when counting alive cells. Set value to 0 to ignore that neighbor. ",
 	    usage : "SNM( change rules array or a refference to an array);",
-	    regexp:"SNM\\((.*?;)",
+	    regexp : "SNM\\((.*?;)",
 	    proc : function(match, offset, string) {
 		var subStr = match.substring(4, match.length - 2);
-		
-		/*create an expression id to index this function */
+
+		/* create an expression id to index this function */
 
 		if (self.runtime.exp[subStr] == null) {
 		    self.runtime.exp[subStr] = self.getCondition(subStr);
@@ -363,19 +376,19 @@ function DNAEvalEngine() {
 
 	    },
 	    op : function(cell, valFunc) {
-		var cdna =cell.rule.dna;
+		var cdna = cell.rule.dna;
 		cdna.params.nMask = valFunc(cell);
-		
+
 	    }
 	},
 	"RNM" : {
 	    desc : "Rotate neighbors mask.",
 	    usage : "RNM(expression);",
-	    regexp:"RNM\\((.*?;)",
+	    regexp : "RNM\\((.*?;)",
 	    proc : function(match, offset, string) {
 		var subStr = match.substring(4, match.length - 2);
-		
-		/*create an expression id to index this function */
+
+		/* create an expression id to index this function */
 
 		if (self.runtime.exp[subStr] == null) {
 		    self.runtime.exp[subStr] = self.getCondition(subStr);
@@ -387,24 +400,23 @@ function DNAEvalEngine() {
 
 	    },
 	    op : function(cell, valFunc) {
-		var cdna =cell.rule.dna;
+		var cdna = cell.rule.dna;
 		cdna.params.nMask = arraySpin(cdna.params.nMask, valFunc(cell));
-		
+
 	    }
 	},
 	"SCR" : {
-	    desc : "Sets the cell change rules vector. The vector should have 8 elements. The position represents the number of alive neighbors and the value the operation that should be executed. The possible operations in this context are: <br>" +
-	    		"<ul> " +
-	    		"<li> '0' - to turn the cell off </li>" +
-	    		"<li> '1' - to turn the cell on </li>" +
-	    		"<li> 'i' - to flip the cell </li>" +
-	    		"</ul> ",
+	    desc : "Sets the cell change rules vector. The vector should have 8 elements. The position represents the number of alive neighbors and the value the operation that should be executed. The possible operations in this context are: <br>"
+		    + "<ul> "
+		    + "<li> '0' - to turn the cell off </li>"
+		    + "<li> '1' - to turn the cell on </li>"
+		    + "<li> 'i' - to flip the cell </li>" + "</ul> ",
 	    usage : "SCR( an array or a refference to an array);",
-	    regexp:"SCR\\((.*?;)",
+	    regexp : "SCR\\((.*?;)",
 	    proc : function(match, offset, string) {
 		var subStr = match.substring(4, match.length - 2);
-		
-		/*create an expression id to index this function */
+
+		/* create an expression id to index this function */
 
 		if (self.runtime.exp[subStr] == null) {
 		    self.runtime.exp[subStr] = self.getCondition(subStr);
@@ -418,50 +430,71 @@ function DNAEvalEngine() {
 		// + "'].op(cell,"+parseInt(spinStr)+");";
 	    },
 	    op : function(cell, valFunc) {
-		var cdna =cell.rule.dna;
+		var cdna = cell.rule.dna;
 		cdna.params.changeRules = valFunc(cell);
-		
+
 	    }
 	},
-	
+
 	"CHANGE" : {
 	    desc : "Changes the state of the cell according to the change rules. See SCR operation.",
 	    usage : "CHANGE;",
-	    regexp:"CHANGE;",
+	    regexp : "CHANGE;",
 	    op : function(cell) {
-		var cdna =cell.rule.dna;
-		
+		var cdna = cell.rule.dna;
+
 		var changeRules = cdna.params.changeRules;
-		
-		/* if no change rules are provided, we can't assume a default, so do nothing */
-		if(changeRules == null){
-		    return;
-		}
-		
+
 		var alive = 0;
 		var n = cell.neighbors;
 		var size = n.length;
-		
-		if(cdna.params.nMask == null){
+
+		if (cdna.params.nMask == null) {
 		    /* if no neighbors mask was provided, consider all */
-		    cdna.params.nMask=[1,1,1,1,1,1,1,1];
+		    cdna.params.nMask = [ 1, 1, 1, 1, 1, 1, 1, 1 ];
 		}
 		var m = cdna.params.nMask;
 
 		/* neighbor states filtered by mask */
 		var nm = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
 
+		cell.oldG=cell.g;
+		
+		/*
+		 * initialize gravity as well, starting with the state of the
+		 * cell
+		 */
+		cell.g = cell.oldState;
+
 		/* apply mask */
 		for (var i = 0; i < size; i++) {
-		    if (n[i] !=null && (n[i].oldState & m[i]) ) {
+		    if (n[i] == null) {
+			continue;
+		    }
+
+		    if ((n[i].oldState & m[i])) {
 			nm[i] = 1;
 			alive++;
-		    } 
+
+		    }
+
+		    /* update g with the g of the neighbor */
+		    cell.g += n[i].oldG;
+		}
+//                cell.g += alive;
+		/* norm g with the max value */
+		cell.g = cell.g / (size + 1);
+
+		/*
+		 * if no change rules are provided, we can't assume a default,
+		 * so do nothing
+		 */
+		if (changeRules == null) {
+		    return;
 		}
 
 		/* maps alive neighbors positions to integers from 0 to 255 */
-//		var opIndex = parseInt(''+ nm.join(''), 2);
-
+		// var opIndex = parseInt(''+ nm.join(''), 2);
 		var op = changeRules[alive];
 		if (op) {
 		    cdna.operations[op](cell);
@@ -469,9 +502,6 @@ function DNAEvalEngine() {
 		    console.log("No op for " + alive + " rules size "
 			    + changeRules.length);
 		}
-		
-		/* update g */
-		cell.g = (cell.g + alive) / (size + 1);
 
 	    }
 	}

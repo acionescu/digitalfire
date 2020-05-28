@@ -1,0 +1,72 @@
+{
+	"title": "Gravity field",
+	"desc": "Simulates how gravity field propagates throgh space around objects with mass, in this case, cells that are alive. Notice how the field remains still at a distance, although in the near vicinity of the object it fluctuates.",
+	"types": {
+		"s1": {
+			"params": {
+				"PER": 100,
+				"ACTPER": 1,
+				"WAIT": 10
+			}
+		},
+		"s2": {
+			"params": {
+				"PER": 50,
+				"ACTPER": 10,
+				"WAIT": 4
+			}
+		},
+		"s3": {
+			"params": {
+				"PER": 207,
+				"ACTPER": 1,
+				"WAIT": 10
+			}
+		}
+	},
+	"setup": {
+		"cells": [
+			{
+				"pos": [
+					60,
+					30
+				],
+				"type": "s1"
+			},
+			{
+				"pos": [
+					40,
+					60
+				],
+				"type": "s2"
+			},
+			{
+				"pos": [
+					70,
+					70
+				],
+				"type": "s3"
+			}
+		]
+	},
+	"genes": {
+		"ginit": "C.A < 7 && C.GG < 100 -> V.color='white'; OFF; R; SRM(1); ",
+		"alloff": "C.GG > 0 && C.A==0 -> OFF;",
+		"srcon": "C.GG==0 && C.A % V.PER > V.ACTPER -> OFF;",
+		"srcoff": "C.GG==0 && C.A > V.WAIT && C.A % V.PER <= V.ACTPER -> ON;",
+		"rop": "C.A > 1 -> CHANGE; V.GRA=C.G;",
+		"con1": "C.A > 1  && C.G > 0.000000000001 -> V.offColor='#111111'; ",
+		"con2": "C.A > 1  && C.G > 0.00000000001 -> V.offColor='#222222'; ",
+		"con3": "C.A > 1  && C.G > 0.0000000001 -> V.offColor='#333333'; ",
+		"con4": "C.A > 1  && C.G > 0.000000001 -> V.offColor='#444444'; ",
+		"con5": "C.A > 1  && C.G > 0.00000001 -> V.offColor='#555555'; ",
+		"con6": "C.A > 1  && C.G > 0.0000001 -> V.offColor='#666666'; ",
+		"con7": "C.A > 1  && C.G > 0.000001 -> V.offColor='#777777'; ",
+		"con8": "C.A > 1  && C.G > 0.00001 -> V.offColor='#888888'; ",
+		"con9": "C.A > 1 && C.G > 0.0001 -> V.offColor='#999999'; ",
+		"con10": "C.A > 1 && C.G >0.001 -> V.offColor='#aaaaaa'; ",
+		"con11": "C.A > 1 &&  C.G >0.01 -> V.offColor='#bbbbbb'; ",
+		"con12": "C.A > 1 &&  C.G >0.1 -> V.offColor='#cccccc'; ",
+		"coff": "C.A > 1 && C.GG > 0 && C.G <= 0.000000000001 -> V.offColor='black'; "
+	}
+}

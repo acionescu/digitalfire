@@ -203,6 +203,13 @@ PhysicalObject.prototype.hasChanged=function(changer){
     }
 }
 
+/**
+ * Override this to prepare the object for a new iteration
+ */
+PhysicalObject.prototype.prepareToCompute = function(){
+    
+}
+
 function Universe(dimensions) {
     this.dimensions = dimensions;
     this.objects = new Array();
@@ -211,6 +218,12 @@ function Universe(dimensions) {
 }
 
 Universe.prototype.compute = function() {
+    
+    for (var i = 0; i < this.objects.length; i++) {
+	var obj=this.objects[i];
+	/* call prepare to compute on all objects first */
+	obj.prepareToCompute();
+    }
 
     for (var i = 0; i < this.objects.length; i++) {
 	var obj=this.objects[i];

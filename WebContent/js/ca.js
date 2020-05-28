@@ -46,8 +46,10 @@ function Cell(position, shape, rule, state) {
     this.state = state;
     this.oldState = state;
     this.color = "Yellow";
+    this.offColor="Black";
     this.age = 0;
     this.drawn = false;
+    this.oldG=0;
     this.g = 0;
     this.neighbors = new Array();
     this.stateStats = [ 0, 0 ];
@@ -59,8 +61,17 @@ function Cell(position, shape, rule, state) {
 Cell.prototype = new PhysicalObject();
 Cell.prototype.constructor = Cell;
 
-Cell.prototype.compute = function(automata) {
+Cell.prototype.prepareToCompute = function(){
+    /* save old state */
     this.oldState = this.state;
+    
+    /* save old g */
+    this.oldG=this.g;
+    
+}
+
+Cell.prototype.compute = function(automata) {
+    
     this.rule.execute(this);
     this.drawn=false;
     this.computeStats();
@@ -85,7 +96,7 @@ Cell.prototype.draw = function(canvas) {
     if (this.state) {
 	canvas.fillStyle = this.color;
     } else {
-	canvas.fillStyle = "Black";
+	canvas.fillStyle = this.offColor;
     }
     this.drawn = true;
     PhysicalObject.prototype.draw.apply(this, arguments);
