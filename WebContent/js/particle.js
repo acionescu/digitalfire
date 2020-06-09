@@ -1,35 +1,64 @@
 /*******************************************************************************
- *MIT License
- *
- *Copyright (c) 2020 Adrian Cristian Ionescu
- *
- *Permission is hereby granted, free of charge, to any person obtaining a copy
- *of this software and associated documentation files (the "Software"), to deal
- *in the Software without restriction, including without limitation the rights
- *to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *copies of the Software, and to permit persons to whom the Software is
- *furnished to do so, subject to the following conditions:
- *
- *The above copyright notice and this permission notice shall be included in all
- *copies or substantial portions of the Software.
- *
- *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *SOFTWARE.
+ * MIT License
+ * 
+ * Copyright (c) 2020 Adrian Cristian Ionescu
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  ******************************************************************************/
 
 function Point(coords) {
     this.coords = coords;
+    this.magVal; // lazy compute
+
+    if (this.coords != null) {
+	for (var i = 0; i < coords.length; i++) {
+	    this.coords[i] = this.makeSafe(this.coords[i]);
+	}
+    } else {
+	throw "Coords can't be undefined";
+    }
 }
 
 Point.prototype.constructor = Point;
 
-Point.prototype.fromJSON=function(json){
-    if(json == undefined){
+Point.prototype.makeSafe = function(val) {
+    if (val == null) {
+	console.log(" Unsafe point coord " + val);
+	return 0;
+    }
+    try {
+	if (val > Number.MAX_VALUE) {
+	    return Number.MAX_VALUE;
+	} else if (val < -Number.MAX_VALUE) {
+	    return -Number.MAX_VALUE;
+	}
+	else if (Math.abs(val) < Number.MIN_VALUE){
+	    return 0;
+	}
+    } catch (e) {
+	console.log("error too make number safe " + val);
+    }
+    return val;
+}
+
+Point.prototype.fromJSON = function(json) {
+    if (json == undefined) {
 	return;
     }
     this.coords = json.coords;
@@ -48,12 +77,12 @@ Point.prototype.distance = function(point) {
 
 };
 
-Point.prototype.copy = function(){
+Point.prototype.copy = function() {
     return new Point(this.coords.slice());
 };
 
 Point.prototype.checkPointDimension = function(point) {
-    if(point.coords == undefined){
+    if (point.coords == undefined) {
 	throw "Point without coords";
     }
     if (this.coords.length != point.coords.length) {
@@ -62,11 +91,11 @@ Point.prototype.checkPointDimension = function(point) {
     }
 };
 
-Point.prototype.x = function(){
+Point.prototype.x = function() {
     return this.coords[0];
 };
 
-Point.prototype.y = function(){
+Point.prototype.y = function() {
     return this.coords[1];
 };
 
@@ -78,7 +107,7 @@ Point.prototype.add = function(point) {
     for (var i = 0; i < this.coords.length; i++) {
 	nc[i] = this.coords[i] + point.coords[i];
     }
-
+    // console.log(this.coords +" + "+point.coords+" -> "+nc);
     return new Point(nc);
 };
 
@@ -111,39 +140,61 @@ Point.prototype.rotate2D = function(drot) {
     this.coords = newCoord;
 };
 
-
 /**
  * 
- * @param scale - array with scaling factor for each dimension
+ * @param scale -
+ *                array with scaling factor for each dimension
  * @returns {Point}
  */
-Point.prototype.scale = function(scale){
-    if(scale){
-    
-        this.checkPointDimension(scale);
-        var nc = [];
-    
-        for (var i = 0; i < this.coords.length; i++) {
-    		nc[i] = this.coords[i]*scale[i];
-        }
-        return new Point(nc);
+Point.prototype.scale = function(scale) {
+    if (scale && scale.length == this.coords.length) {
+
+	var nc = [];
+
+	for (var i = 0; i < this.coords.length; i++) {
+	    nc[i] = this.coords[i] * scale[i];
+	}
+	return new Point(nc);
     }
     return this.copy();
 };
 
-Point.prototype.equals=function(other){
-    if(this.coords.length != other.coords.length){
+Point.prototype.equals = function(other) {
+    if (this.coords.length != other.coords.length) {
 	return false;
     }
-    
-    for(var i=0;i<other.coords.length;i++){
-	if(this.coords[i] != other.coords[i]){
+
+    for (var i = 0; i < other.coords.length; i++) {
+	if (this.coords[i] != other.coords[i]) {
 	    return false;
 	}
     }
-    
+
     return true;
 };
+
+Point.prototype.magnitude = function() {
+    if (this.magVal != null) {
+	return this.magVal;
+    }
+
+    var sum = 0;
+
+    for (var i = 0; i < this.coords.length; i++) {
+	var v = this.coords[i];
+
+	sum += v * v;
+    }
+    
+    if(sum < Number.MAX_VALUE){
+	this.magVal = Math.sqrt(sum);
+    }
+    else{
+	this.magVal = Number.MAX_VALUE;
+    }
+
+    return this.magVal;
+}
 
 function Shape() {
 
@@ -179,7 +230,7 @@ function PhysicalObject(position, shape, mass) {
     this.mass = mass;
     this.position = position;
     /* the order in which this object is updated */
-    this.updateIndex=0;
+    this.updateIndex = 0;
     /* the parent universe */
     this.universe;
 }
@@ -193,49 +244,62 @@ PhysicalObject.prototype.draw = function(canvas) {
 };
 
 /* called to mark that this object was changed this iteration by the changer */
-PhysicalObject.prototype.hasChanged=function(changer){
-//    console.log("has changed called on "+this.updateIndex);
-    /* if this object was changed this iteration by an object that is updated after it, then we need to recompute its state */
-    if(changer.updateIndex > this.updateIndex){
-	this.changedBy=changer;
+PhysicalObject.prototype.hasChanged = function(changer) {
+    // console.log("has changed called on "+this.updateIndex);
+    /*
+     * if this object was changed this iteration by an object that is updated
+     * after it, then we need to recompute its state
+     */
+    if (changer.updateIndex > this.updateIndex) {
+	this.changedBy = changer;
 	this.universe.toUpdate.push(this);
-//	console.log("mark for update "+this.updateIndex);
+	// console.log("mark for update "+this.updateIndex);
     }
+}
+
+PhysicalObject.prototype.markAsChanged = function() {
+    this.prepareToCompute();
+    this.universe.toUpdate.push(this);
+
 }
 
 /**
  * Override this to prepare the object for a new iteration
  */
-PhysicalObject.prototype.prepareToCompute = function(){
-    
+PhysicalObject.prototype.prepareToCompute = function() {
+
+}
+
+PhysicalObject.prototype.printObjInfo = function() {
+
 }
 
 function Universe(dimensions) {
     this.dimensions = dimensions;
     this.objects = new Array();
     this.pointsObjects = new Object();
-    this.toUpdate=[];
+    this.toUpdate = [];
 }
 
 Universe.prototype.compute = function() {
-    
+
     for (var i = 0; i < this.objects.length; i++) {
-	var obj=this.objects[i];
+	var obj = this.objects[i];
 	/* call prepare to compute on all objects first */
 	obj.prepareToCompute();
     }
 
     for (var i = 0; i < this.objects.length; i++) {
-	var obj=this.objects[i];
+	var obj = this.objects[i];
 	obj.compute(this);
 	/* mark this object as unchanged */
-	obj.changedBy=null;
+	obj.changedBy = null;
     }
-    
-    while(this.toUpdate.length > 0){
+
+    while (this.toUpdate.length > 0) {
 	var obj = this.toUpdate.shift();
 	obj.compute(this);
-	obj.changedBy=null;
+	obj.changedBy = null;
     }
 };
 
@@ -247,12 +311,12 @@ Universe.prototype.draw = function(canvas) {
 };
 
 Universe.prototype.addObject = function(object) {
-    var objIndex=this.objects.length;
+    var objIndex = this.objects.length;
     this.objects.push(object);
     this.pointsObjects[object.position.coords] = object;
     /* the order in which objects are updated */
-    object.updateIndex=objIndex;
-    object.universe=this;
+    object.updateIndex = objIndex;
+    object.universe = this;
 };
 
 Universe.prototype.getObjectByCoords = function(coords) {

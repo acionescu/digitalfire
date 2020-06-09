@@ -103,6 +103,14 @@ function DNAEvalEngine() {
 			return "cell.age";
 		    }
 		},
+		"C.S" : {
+		    desc : "The state of the cell. 1 if on, 0 if off.",
+		    usage : "C.S",
+		    regexp : "C\\.S",
+		    proc : function(match) {
+			return "cell.state";
+		    }
+		},
 		/* growth direction */
 		"C.GD" : {
 		    desc : "The direction in which the cell grows from the parent. A value from 0 to 7. See cell neighbors.",
@@ -162,6 +170,22 @@ function DNAEvalEngine() {
 		    regexp : "C\\.G",
 		    proc : function(match) {
 			return "cell.g";
+		    }
+		},
+		"C.GDIR" : {
+		    desc : "The direction of the gravity force felt by a cell. This returns an integer fro 0 to 7 representing the 8  possible directions, or -1 if the resulting force is 0.",
+		    usage : "C.GDIR",
+		    regexp : "C\\.GDIR",
+		    proc : function(match) {
+			return "cell.gDir";
+		    }
+		},
+		"C.GMAG" : {
+		    desc : "The magnitude of the gravity force acting upon this cell.",
+		    usage : "C.GMAG",
+		    regexp : "C\\.GMAG",
+		    proc : function(match) {
+			return "cell.gMag";
 		    }
 		}
 	    }, {
@@ -228,6 +252,160 @@ function DNAEvalEngine() {
 	    }
 	},
 	/* set replication type */
+	"MOVE" : {
+	    desc : "Moves this cell in the direction specified via SMD command.",
+	    usage : "MOVE;",
+	    regexp : "MOVE;",
+	    op : function(cell) {
+		var cdna = cell.rule.dna;
+		var md = cdna.params.moveDir;
+
+		if (md >= 0 && md <= 7 && cell.state == 1) {
+		    var n = cell.neighbors[md];
+		    if (n == null || n.rule.dna == null) {
+			/* deal bounce */
+			// if (md % 2 == 1) {
+			// cell.gVec.rotate2D(Math.PI);
+			// } else {
+			// var x = cell.position.x();
+			// var y = cell.position.y();
+			//
+			// var maxSide = cell.universe.config.side - 1
+			//
+			// if ((x == 0 && md == 0)
+			// || (x == maxSide && md == 4)
+			// || (y == maxSide && md == 6)
+			// || (y == 0 && md == 2)) {
+			// cell.gVec.rotate2D(Math.PI / 2);
+			// } else {
+			// cell.gVec.rotate2D(-Math.PI / 2);
+			// }
+			// }
+			var maxSide = cell.universe.config.side - 1;
+			var posx = cell.position.x();
+			var posy = cell.position.y();
+
+			var gvecx = cell.gVec.x();
+			var gvecy = cell.gVec.y();
+
+			if (posx == 0 || posx == maxSide) {
+			    gvecx *= -1;
+			}
+
+			if (posy == 0 || posy == maxSide) {
+			    gvecy *= -1;
+			}
+
+			cell.gVec = new Point([ gvecx, gvecy ]);
+
+			cell.oldGVec = cell.gVec.copy();
+
+			// cell.gVec=new Point([0,0]);
+			//			
+			// else if(md ==0 && cell.|| md ==4 ){
+			// cell.gVec.rotate2D(Math.PI/2);
+			// }
+			// else{
+			// cell.gVec.rotate2D(-Math.PI/2);
+			// }
+			// console.log("bounce "+cell.gDir +" ->
+			// "+mapDirectionToNeighbor(cell.gVec));
+			// cell.gVec = cell.gVec.scale([1.1,1.1]);
+		    } else if ( n.state ==1 ) {
+			/* deal collision */
+
+			var gdif = cell.oldG - n.oldG;
+			var gsum = cell.oldG + n.oldG;
+
+			var gr = 0;
+			if (gsum != 0) {
+			    gr = gdif / gsum;
+			}
+
+			if (isNaN(gr)) {
+			    gr = 0;
+			}
+
+			// var sf1 = 2 * n.oldG / gsum;
+			// var sf2 = 2 * cell.oldG / gsum;
+			//			
+			// var crVec = cell.oldGVec.scale([ gr, gr ]).add(
+			// n.oldGVec.scale([ sf1, sf1 ]));
+			// var nrVec = n.oldGVec.scale([ -gr, -gr ]).add(
+			// cell.oldGVec.scale([ sf2, sf2 ]));
+			//			
+			// cell.gVec = crVec;
+			// cell.oldGVec = crVec.copy();
+			// n.gVec = nrVec;
+			// n.oldGVec = nrVec.copy();
+
+			/* compute transfer energy ratio */
+			var tr = (1 - gr -cell.oldG*cell.oldG/cell.gMag);
+
+			
+			var te = cell.gVec.scale([ tr, tr ]);
+
+			cell.gVec = cell.gVec.subtract(te);
+			cell.oldGVec = cell.gVec.copy();
+			
+			n.gVec = n.gVec.add(te);
+			n.oldGVec = n.gVec.copy();
+			
+		    } else {
+
+			var ndna = n.rule.dna;
+			if (ndna.params.type == cdna.params.type) {
+			    ndna.setStateOn(n);
+			    cdna.setStateOff(cell);
+
+			    /* update gs */
+
+			    cell.g -= Cell.META.CONST.CR;
+			    if (cell.g < 0) {
+				cell.g = 0;
+			    }
+
+			    // var
+			    // sf=1-Cell.META.CONST.CR/cell.gVec.magnitude();
+
+			    var gsum = cell.oldG + n.oldG;
+			    var sf = 1;
+			    if (gsum != 0 && cell.gMag != 0) {
+				
+//				sf = (1 - (cell.g - n.oldG)/ cell.oldG);
+				
+//				sf = (1 - cell.g*cell.g/cell.gMag);
+				
+				sf = (1 - (cell.g - n.oldG)/ (cell.oldG+n.oldG) - cell.g*cell.g/cell.gMag);
+				
+//				sf = (1 - (cell.g - n.oldG + Cell.META.CONST.CTNR )/ cell.oldG - cell.g*Cell.META.CONST.CR/cell.gMag);
+			    }
+
+			    n.gVec = cell.gVec.scale([ sf, sf ]);
+			    n.oldGVec = cell.oldGVec.scale([ sf, sf ]);
+
+			    cell.gVec = new Point([ 0, 0 ]);
+			    cell.oldGVec = new Point([ 0, 0 ]);
+			    cell.gMag = 0;
+			    cell.gDir = -1;
+
+			    n.g += Cell.META.CONST.CR;
+
+			    n.drawn = false;
+			    cell.drawn = false;
+
+			} else {
+			    console.log(cell.pos + " -> Cell of type "
+				    + cdna.params.type
+				    + " can't move to cell of type "
+				    + ndna.params.type + " -> " + n.pos);
+			}
+		    }
+		}
+	    }
+	},
+
+	/* set replication type */
 	"SRT" : {
 	    desc : "Sets the replication type of the cell. This is used during the replication operation to set the type of the offspring cell.",
 	    usage : "SRT(&lt;a predefined cell type&gt;);",
@@ -250,6 +428,44 @@ function DNAEvalEngine() {
 		// console.log("calling spinFunc "+spinFunc);
 		// console.log("srt val="+valFunc);
 		cell.rule.dna.params.replicationType = valFunc(cell);
+	    }
+	},
+	/* set replication direction */
+	"SRD" : {
+	    desc : "Sets the replication direction of the cell. This is used during the replication operation. The cell will replicate in this direction. See cell neighbors.",
+	    usage : "SRD(&lt;a number from 0 to 7&gt;);",
+	    regexp : "SRD\\((.*?;)",
+	    proc : function(match, offset, string) {
+		var subStr = match.substring(4, match.length - 2);
+
+		var pss = subStr.replace(/'/g, "");
+		// console.log("SRT match: "+match+ " "+subStr+ " "+pss);
+		if (self.runtime.exp[pss] == null) {
+		    self.runtime.exp[pss] = self.getCondition(subStr);
+		}
+
+		return "Cell.DNA_ENGINE.ops['" + "SRD"
+			+ "'].op(cell,Cell.DNA_ENGINE.runtime.exp['" + pss
+			+ "']);";
+	    },
+
+	    op : function(cell, valFunc) {
+		/* get the replication direction */
+		var rd = valFunc(cell);
+		if (rd < 0 || rd > 7) {
+		    console
+			    .log("SRD Error: Expected a number between 0 and 7, but got "
+				    + rd);
+		    return;
+		}
+		/* initialize replication mask with 0 */
+		var rm = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
+		/*
+		 * set the specified direction to 1, which means the cell will
+		 * replicate only in this direction
+		 */
+		rm[rd] = 1;
+		cell.rule.dna.params.replicationMask = rm;
 	    }
 	},
 	/*
@@ -285,6 +501,39 @@ function DNAEvalEngine() {
 			cell.rule.dna.replicationMask, spinFunc(cell));
 	    }
 	},
+	/* set move direction */
+	"SMD" : {
+	    desc : "Sets the move direction of the cell. This is used during the MOVE operation. The cell will move in this direction. See cell neighbors.",
+	    usage : "SMD(&lt;a number from 0 to 7&gt;);",
+	    regexp : "SMD\\((.*?;)",
+	    proc : function(match, offset, string) {
+		var subStr = match.substring(4, match.length - 2);
+
+		var pss = subStr.replace(/'/g, "");
+		// console.log("SRT match: "+match+ " "+subStr+ " "+pss);
+		if (self.runtime.exp[pss] == null) {
+		    self.runtime.exp[pss] = self.getCondition(subStr);
+		}
+
+		return "Cell.DNA_ENGINE.ops['" + "SMD"
+			+ "'].op(cell,Cell.DNA_ENGINE.runtime.exp['" + pss
+			+ "']);";
+	    },
+
+	    op : function(cell, valFunc) {
+		/* get the move direction */
+		var md = valFunc(cell);
+		if (md < 0 || md > 7) {
+		    console
+			    .log("SMD Error: Expected a number between 0 and 7, but got "
+				    + md);
+		    return;
+		}
+
+		cell.rule.dna.params.moveDir = md;
+	    }
+	},
+
 	/* set custom parameter ( always a number ) */
 	"SETV" : {
 	    desc : "Defines/sets a custom variable. ",
@@ -331,7 +580,7 @@ function DNAEvalEngine() {
 	    regexp : "ON;",
 	    op : function(cell) {
 		cell.rule.dna.setStateOn(cell);
-//		cell.color = cell.rule.dna.params.color;
+		// cell.color = cell.rule.dna.params.color;
 		cell.drawn = false;
 	    }
 	},
@@ -341,7 +590,7 @@ function DNAEvalEngine() {
 	    regexp : "OFF;",
 	    op : function(cell) {
 		cell.rule.dna.setStateOff(cell);
-//		cell.offColor=cell.rule.dna.params.offColor;
+		// cell.offColor=cell.rule.dna.params.offColor;
 		cell.drawn = false;
 	    }
 	},
@@ -352,9 +601,9 @@ function DNAEvalEngine() {
 	    op : function(cell) {
 		cell.rule.dna.setInverseState(cell);
 		cell.drawn = false;
-//		if(cell.state){
-//		    cell.color = cell.rule.dna.params.color;
-//		}
+		// if(cell.state){
+		// cell.color = cell.rule.dna.params.color;
+		// }
 	    }
 	},
 	"SNM" : {
@@ -458,8 +707,6 @@ function DNAEvalEngine() {
 		/* neighbor states filtered by mask */
 		var nm = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
 
-		cell.oldG=cell.g;
-		
 		/*
 		 * initialize gravity as well, starting with the state of the
 		 * cell
@@ -480,10 +727,16 @@ function DNAEvalEngine() {
 
 		    /* update g with the g of the neighbor */
 		    cell.g += n[i].oldG;
+		    /* update neighbors g forces array */
+		    cell.gForces[i] = n[i].oldG;
 		}
-//                cell.g += alive;
+		// cell.g += alive;
 		/* norm g with the max value */
 		cell.g = cell.g / (size + 1);
+
+		// var rg = getResultantForce(cell.oldGForces);
+		// this.gDir = mapDirectionToNeighbor(rg);
+		// this.gMag = rg.magnitude();
 
 		/*
 		 * if no change rules are provided, we can't assume a default,
@@ -502,6 +755,103 @@ function DNAEvalEngine() {
 		    console.log("No op for " + alive + " rules size "
 			    + changeRules.length);
 		}
+
+	    }
+	},
+
+	"COMPUTEG" : {
+	    desc : "Computes the resulting gravity vector, from neighbors g forces. The gravity direction can be accessed via the GDIR command, and the gravity magnitude via the GMAG command.",
+	    usage : "COMPUTEG;",
+	    regexp : "COMPUTEG;",
+	    op : function(cell) {
+		var cdna = cell.rule.dna;
+
+		var alive = 0;
+		var n = cell.neighbors;
+		var size = n.length;
+
+		/*
+		 * initialize gravity as well, starting with the state of the
+		 * cell
+		 */
+		cell.g = cell.oldState;
+
+		var f = 9;
+
+		var selfFactor = cell.oldState / (f * f);
+
+		cell.gForces = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
+
+		/* apply mask */
+		for (var i = 0; i < size; i++) {
+		    if (n[i] == null) {
+			continue;
+		    }
+
+		    var ng = n[i].oldG - selfFactor;
+		    if (ng < 0) {
+			ng = 0;
+		    }
+		    /* update g with the g of the neighbor */
+		    cell.g += ng;
+		    /* update neighbors g forces array */
+		    cell.gForces[i] = ng;// n[i].oldG;
+		}
+		// cell.g += alive;
+		/* norm g with the max value */
+		cell.g = cell.g / f;
+
+		if (cell.state == 1 && (cell.age - cell.stateAge) > 1) {
+
+		    /* compute instant g force */
+		    var rg = getResultantForce(cell.gForces);
+
+		    var oldGVec = cell.oldGVec;
+
+		    /* gravity component ratio */
+		    var gcr = 1;
+
+		    rg = rg.scale(cell.oldG);
+
+		    var gVec = oldGVec.add(rg);
+		    
+//		    var rawg = (cell.oldG - Cell.META.CONST.CR);
+//
+//		    var d = gVec.magnitude() - rawg*rawg;
+//
+//		    if (d > 0) {
+//			var sr = d / gVec.magnitude();
+//			gVec = gVec.scale([ sr, sr ]);
+
+			cell.gDir = mapDirectionToNeighbor(gVec);
+			cell.gMag = gVec.magnitude();
+			cell.gVec = gVec;
+//		    } else {
+//			cell.gDir = -1
+//			cell.gMag = 0;
+//			cell.gVec = new Point([ 0, 0 ]);
+//		    }
+
+		    if (cell.gMag == null) {
+			console.log("Ups. gmag=null " + cell.position.x() + " "
+				+ cell.position.y());
+		    }
+
+		} else if (cell.oldState != cell.state) {
+		    // cell.gDir = -1;
+		    // cell.gMag = 0;
+		    // cell.gVec = new Point([ 0, 0 ]);
+		    // cell.oldGVec = new Point([ 0, 0 ]);
+
+		    // var rg = getResultantForce(cell.gForces);
+		    // console.log("instant force on switch: "+cell.oldState+"
+		    // -> "+cell.state+" : "+rg.coords);
+		}
+
+		// if(cell.state != cell.oldState){
+		// console.log(" computeg g="+cell.g+" gMag="+cell.gMag+"
+		// gDir="+cell.gDir);
+		// }
 
 	    }
 	}

@@ -1,25 +1,25 @@
 /*******************************************************************************
- *MIT License
- *
- *Copyright (c) 2020 Adrian Cristian Ionescu
- *
- *Permission is hereby granted, free of charge, to any person obtaining a copy
- *of this software and associated documentation files (the "Software"), to deal
- *in the Software without restriction, including without limitation the rights
- *to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *copies of the Software, and to permit persons to whom the Software is
- *furnished to do so, subject to the following conditions:
- *
- *The above copyright notice and this permission notice shall be included in all
- *copies or substantial portions of the Software.
- *
- *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- *SOFTWARE.
+ * MIT License
+ * 
+ * Copyright (c) 2020 Adrian Cristian Ionescu
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  ******************************************************************************/
 /* cellular automata */
 
@@ -45,12 +45,28 @@ function Cell(position, shape, rule, state) {
     this.rule = rule;
     this.state = state;
     this.oldState = state;
+    /* the age when the cell last switched states */
+    this.stateAge=0;
     this.color = "Yellow";
-    this.offColor="Black";
+    this.offColor = "Black";
     this.age = 0;
     this.drawn = false;
-    this.oldG=0;
+    this.oldG = 0;
     this.g = 0;
+    this.gForces=[0,0,0,0,0,0,0,0];
+    this.oldGForces=[0,0,0,0,0,0,0,0];
+    /* direction of the g force resultant */
+    this.gDir=-1;
+    this.oldGDir=-1;
+    
+    /* magnitude of g force resultant */
+    this.gMag=0;
+    this.oldGMag=0;
+    
+    /* the vector representing the gravity force acting of this cell */
+    this.gVec=new Point([0,0]);
+    this.oldGVec=new Point([0,0]);
+    
     this.neighbors = new Array();
     this.stateStats = [ 0, 0 ];
     this.fitness = 0;
@@ -61,19 +77,33 @@ function Cell(position, shape, rule, state) {
 Cell.prototype = new PhysicalObject();
 Cell.prototype.constructor = Cell;
 
-Cell.prototype.prepareToCompute = function(){
+Cell.prototype.setState=function(newState){
+    if(newState != this.state){
+	this.state=newState;
+	this.stateAge=this.age;
+    }
+}
+
+Cell.prototype.prepareToCompute = function() {
     /* save old state */
     this.oldState = this.state;
-    
+
     /* save old g */
-    this.oldG=this.g;
+    this.oldG = this.g;
+
+    /* save old g forces */
+    this.oldGForces=this.gForces.slice();
     
+    this.oldGDir=this.gDir;
+    this.oldGMag = this.gMag;
+    
+    this.oldGVec=this.gVec.copy();
 }
 
 Cell.prototype.compute = function(automata) {
-    
+
     this.rule.execute(this);
-    this.drawn=false;
+    this.drawn = false;
     this.computeStats();
 };
 
@@ -90,7 +120,7 @@ Cell.prototype.addNeighbor = function(cell) {
 };
 
 Cell.prototype.draw = function(canvas) {
-    if (this.drawn && (this.oldState == this.state) ) {
+    if (this.drawn && (this.oldState == this.state)) {
 	return;
     }
     if (this.state) {
@@ -102,12 +132,30 @@ Cell.prototype.draw = function(canvas) {
     PhysicalObject.prototype.draw.apply(this, arguments);
 };
 
+Cell.prototype.printObjInfo=function (){
+    var cell=this;
+    console.log(JSON.stringify(cell.rule));
+    console.log("gforces ="+cell.gForces);
+    console.log("gf = "+getResultantForce(cell.gForces).coords);
+    console.log("gvec = "+cell.gVec.coords);
+    console.log("g="+cell.g+ ", oldG="+cell.oldG);
+}
+
 Cell.META = Cell.META || {
+
+    CONST : {
+	/* the value of sin45 or cos45, which is sqrt(2)/2 */
+	sin45 : 0.707106781,
+	cos45 : 0.707106781,
+	/* cell ratio = 1/9 - 9 because 8 neighbors and the cell itself. so each counts as 1/9 for computing gravity for example */
+	CR:  0.111111111,
+	/* cell to neighbor ratio */
+	CTNR: 0.012345679
+    },
 
     /* direction encodings to velocity unit vectors */
 
     dirToCoords : {
-
 	0 : new Point([ -1, -1 ]),
 	1 : new Point([ 0, -1 ]),
 	2 : new Point([ 1, -1 ]),
@@ -115,9 +163,25 @@ Cell.META = Cell.META || {
 	4 : new Point([ 1, 1 ]),
 	5 : new Point([ 0, 1 ]),
 	6 : new Point([ -1, 1 ]),
-	7 : new Point([ -1, 0 ]),
+	7 : new Point([ -1, 0 ])
     }
 };
+
+/**
+ * Orthogonal projection coefficients for the neighbors direction. We're only
+ * going to have neighbors at 90 degrees and 45 degrees, So the possible values
+ * for these coefficients are 0,1 and cos45
+ */
+Cell.META.dirToProjections = {
+    0 : new Point([ -Cell.META.CONST.cos45, -Cell.META.CONST.cos45 ]),
+    1 : new Point([ 0, -1 ]),
+    2 : new Point([ Cell.META.CONST.cos45, -Cell.META.CONST.cos45 ]),
+    3 : new Point([ 1, 0 ]),
+    4 : new Point([ Cell.META.CONST.cos45, Cell.META.CONST.cos45 ]),
+    5 : new Point([ 0, 1 ]),
+    6 : new Point([ -Cell.META.CONST.cos45, Cell.META.CONST.cos45 ]),
+    7 : new Point([ -1, 0 ])
+}
 
 // var side = 101;
 // var cellSize = 5;
@@ -376,14 +440,15 @@ CellRuleDNA.prototype.change = function(cell) {
     }
 };
 CellRuleDNA.prototype.setStateOn = function(cell) {
-    cell.state = 1;
+    cell.setState(1);
 };
 CellRuleDNA.prototype.setStateOff = function(cell) {
-    cell.state = 0;
+    cell.setState(0);
 };
 CellRuleDNA.prototype.setInverseState = function(cell) {
     // cell.state = (cell.state + 1) % 2;
-    cell.state ^= 1;
+//    cell.state ^= 1;
+    cell.setState(cell.state ^ 1);
 };
 CellRuleDNA.prototype.combine = function(sources, size) {
     var res = [];
@@ -656,13 +721,13 @@ CASimulation.prototype.populateAutomata = function(automata) {
 	    var changeRules = config.changeRules1;
 	    var mr = 0.7;
 	    var opt = [ 0.8, 0.81, 0.9, 1, 1 ];
-//
-//	    if (Math.sqrt(Math.pow(Math.abs(side / 2 - col), 2)
-//		    + Math.pow(Math.abs(side / 2 - row), 2)) > 30) {
-//		m = config.mask2;
-//		changeRules = config.changeRules2;
-//		mr = 0.9;
-//	    }
+	    //
+	    // if (Math.sqrt(Math.pow(Math.abs(side / 2 - col), 2)
+	    // + Math.pow(Math.abs(side / 2 - row), 2)) > 30) {
+	    // m = config.mask2;
+	    // changeRules = config.changeRules2;
+	    // mr = 0.9;
+	    // }
 
 	    var cellDna = config.ruleCreator(m, 1, changeRules);
 	    if (config.autoInit && cellDna != null) {
@@ -682,7 +747,9 @@ CASimulation.prototype.populateAutomata = function(automata) {
     for (row = 0; row < w; row++) {
 	for (col = 0; col < h; col++) {
 	    var c = automata.getObjectByCoords([ col, row ]);
-
+if(c == null){
+    console.log("Can't find object for coords "+ [col,row]);
+}
 	    c.addNeighbor(automata.getObjectByCoords([ col - 1, row - 1 ]));
 	    c.addNeighbor(automata.getObjectByCoords([ col, row - 1 ]));
 	    c.addNeighbor(automata.getObjectByCoords([ col + 1, row - 1 ]));
@@ -758,8 +825,12 @@ CASimulation.prototype.onMouseDown = function(event) {
 	    Math.ceil(coords.x / currentConfig.cellSize) - 1,
 	    Math.ceil(coords.y / currentConfig.cellSize) - 1 ]);
 
-    console.log(JSON.stringify(cell.rule));
+    cell.printObjInfo();
+    
+    
 }
+
+
 
 function readOutput(out) {
     var s = "";
@@ -837,23 +908,144 @@ function arraySpin(arr, spin) {
     if (spin < 0) {
 	return arr.concat(arr.splice(0, c));
     } else {
-	return arr.splice(arr.length-c,c).concat(arr);
+	return arr.splice(arr.length - c, c).concat(arr);
     }
 }
 
-function getPropsAsSortedArray(obj, asc){
-    var arr =[];
-    
-    for(var p in obj){
+function getPropsAsSortedArray(obj, asc) {
+    var arr = [];
+
+    for ( var p in obj) {
 	arr.push(p);
     }
     var orig = arr.slice();
-    
-    var out = arr.sort(function(f,s){
-	if( asc){
-	  return (f.length - s.length);
+
+    var out = arr.sort(function(f, s) {
+	if (asc) {
+	    return (f.length - s.length);
 	}
 	return -(f.length - s.length);
     });
     return out;
+}
+
+/**
+ * Computes the resultant force from neighbors values
+ * 
+ * @param nva -
+ *                neighbors values array
+ * @returns
+ */
+function getResultantForce(nva) {
+    /* get projections coefficients */
+    var projCoefs = Cell.META.dirToProjections;
+
+    var resx = 0;
+    var resy = 0;
+
+    for ( var i in projCoefs) {
+	var v = nva[i];
+	var c = projCoefs[i];
+
+	var xComp = v * c.x();
+	var yComp = v * c.y();
+
+	resx += xComp;
+	resy += yComp;
+    }
+    /* return the resulting superposition vector */
+    return new Point([ resx, resy ]);
+}
+
+function mapDirectionToNeighbor(v, minMag) {
+    if (minMag == null) {
+	minMag = null;
+    }
+
+    var mag = v.magnitude();
+
+    /* if the magnitude is zero, return -1 */
+    if (v < minMag) {
+	return -1;
+    }
+
+    var x = v.x();
+    var y = v.y();
+    
+//    if(Math.abs(x) > Math.abs(y)){
+//	if(x < 0){
+//	    return 7;
+//	}
+//	return 3;
+//    }
+//    else{
+//	if(y< 0){
+//	    return 1;
+//	}
+//	return 5;
+//    }
+
+    // /* we're inversing y direction, because atan considers up as positive and
+    // down as negative */
+    var atan = Math.atan2(y, x) * 180 / Math.PI;
+
+    // /* make sure to keep arcs as positive values above 180 degrees */
+    // if (atan < 0 ){
+    // atan += 360;
+    // }
+
+    var aa = Math.abs(atan);
+    var sgn = Math.sign(atan);
+
+    /*
+     * we have to divide the available 360 degrees to 8 neighbors, so they get
+     * 45 degrees each
+     */
+
+    /**
+     * our neighbors are indexed like this: 012 7x3 654
+     * 
+     * while the angles go from 0 to 180 in the lower zone, and from 0 to -180
+     * in the upper zone, starting from right
+     */
+
+    if (aa <= 22.5) {
+	return 3;
+    } else if (aa <= 67.5) {
+	return 3 + sgn;
+    } else if (aa <= 112.5) {
+	return 3 + sgn * 2;
+    } else if (aa <= 157.5) {
+	return 3 + sgn * 3;
+    }
+
+    return 7;
+}
+
+/* tests */
+
+if (false) {
+
+    console.log(mapDirectionToNeighbor(getResultantForce([ 1, 2, 4, 5, 2, 6, 7,
+	    6 ])));
+
+    for ( var c in Cell.META.dirToCoords) {
+	var coords = Cell.META.dirToCoords[c];
+
+	var d = mapDirectionToNeighbor(coords);
+
+	console.log("" + coords.coords + " -> " + d);
+
+	if (c != d) {
+	    console.log("Faieled to map dir. Expected " + c + " but was " + d);
+	}
+    }
+
+    var p1 = new Point([0.5, 0.5]);
+    var p2 = new Point([-0.1,-0.2]);
+    
+    var p3 = p1.add(p2);
+    console.log("p3: "+p3.coords);
+    console.log("p3 scale: "+p3.scale([1,1]).coords);
+    
 }

@@ -6,10 +6,10 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script src="./tp/jquery-2.1.1.js"></script>
-<script src="./js/particle.js"></script>
-<script src="./js/ca.js?v=0.6"></script>
+<script src="./js/particle.js?v=0.7"></script>
+<script src="./js/ca.js?v=0.92"></script>
 <script src="./js/org_ca.js?v=0.2"></script>
-<script src="./js/org_generic.js?v=0.2"></script>
+<script src="./js/org_generic.js?v=0.6"></script>
 
 <link rel="stylesheet" href="./css/ca.css">
 
@@ -44,7 +44,7 @@ Your browser does not support the HTML5 canvas tag.
 
 				<div class="mediumControls">
 					Config:<br>
-					<textarea rows="40" cols="85" name="dnaConfig" id="dnaConfig"
+					<textarea rows="40" cols="70" name="dnaConfig" id="dnaConfig"
 						style="padding: 10px; margin: 0; background: lightgray;"></textarea>
 				</div>
 				<br> <br>
@@ -244,7 +244,6 @@ Your browser does not support the HTML5 canvas tag.
 		    var dna = new GenericDNA(dgConf);
 		    if (cDef.type != null) {
 			dna.setupType(cDef.type);
-			console.log("setup type "+cDef.type +" "+dna.params.PER);
 		    }
 		    cell.rule = new CellRule2(dna);
 		}
@@ -261,7 +260,7 @@ Your browser does not support the HTML5 canvas tag.
 	// 	    $("#dnaConfig").val(d);
 	// 	});
 
-	var exFiles = [ "tree.json","sun.json", "gravity.json", "sun_gravity.json", "updown.json", "spiral.json", "snake.json" ];
+	var exFiles = [ "tree.json","sun.json", "gravity.json", "sun_gravity.json", "updown.json", "spiral.json", "snake.json", "gravity_attraction.json" ];
 	var exConf = {};
 	var loaded = 0;
 	var loadAttempts = 0;
@@ -338,6 +337,9 @@ Your browser does not support the HTML5 canvas tag.
 	}
 
 	// 	run();
+	
+	console.log(0 > Number.MIN_VALUE);
+	
     </script>
 
 </body>
