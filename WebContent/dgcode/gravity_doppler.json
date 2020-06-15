@@ -8,7 +8,7 @@
 				/* minimum move period - how many iterations a cell should wait before trying to move again */
 				"MMP": 1,
 				/* minimum move energy - the minimum energy required for a cell to move */
-				"MME": 200
+				"MME": 0.1
 			}
 		}
 	},
