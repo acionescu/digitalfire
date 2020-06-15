@@ -280,7 +280,10 @@ function Universe(dimensions, config) {
     this.pointsObjects = new Object();
     this.toUpdate = {};
     this.config = config;
-    this.spherical = true;
+    this.spherical = false;
+    if(config != null){
+	this.spherical = !!config.spherical;
+    }
 }
 
 Universe.prototype.compute = function() {

@@ -13,6 +13,9 @@
 		}
 	},
 	"setup": {
+	"config":{
+		"spherical":true
+	},
 		"cells": [
 			{
 				"pos": [

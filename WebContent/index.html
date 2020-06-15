@@ -209,6 +209,17 @@ Your browser does not support the HTML5 canvas tag.
 		    return;
 		}
 	    }
+	    
+	    var dgcode = $("#dnaConfig").val();
+	    dgcode = dgcode.replace(new RegExp("/?\\*.*\\*/", 'g'), "");
+	    // 	    console.log("Parsing: "+dgcode);
+
+	    var dgConf = JSON.parse(dgcode);
+	    
+	    if(dgConf.setup != null && dgConf.setup.config != null){
+		config.spherical = !!dgConf.setup.config.spherical;
+	    }
+	    
 
 	    simulation = new CASimulation(config);
 
@@ -218,14 +229,8 @@ Your browser does not support the HTML5 canvas tag.
 
 	    /* let's inject our organism dna to the center cell */
 
-	    var dgcode = $("#dnaConfig").val();
-	    dgcode = dgcode.replace(new RegExp("/?\\*.*\\*/", 'g'), "");
-	    // 	    console.log("Parsing: "+dgcode);
-
-	    var dgConf = JSON.parse(dgcode);
-
 	    $("#exDesc").html(dgConf.desc);
-
+	    
 	    if (dgConf.setup != null && dgConf.setup.cells != null) {
 		var cells = dgConf.setup.cells;
 		for ( var ci in cells) {
