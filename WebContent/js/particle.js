@@ -47,8 +47,7 @@ Point.prototype.makeSafe = function(val) {
 	    return Number.MAX_VALUE;
 	} else if (val < -Number.MAX_VALUE) {
 	    return -Number.MAX_VALUE;
-	}
-	else if (Math.abs(val) < Number.MIN_VALUE){
+	} else if (Math.abs(val) < Number.MIN_VALUE) {
 	    return 0;
 	}
     } catch (e) {
@@ -105,7 +104,7 @@ Point.prototype.add = function(point) {
     var nc = [];
 
     for (var i = 0; i < this.coords.length; i++) {
-	nc[i] = this.coords[i] + point.coords[i];
+	nc[i] = this.makeSafe(this.coords[i] + point.coords[i]);
     }
     // console.log(this.coords +" + "+point.coords+" -> "+nc);
     return new Point(nc);
@@ -117,7 +116,7 @@ Point.prototype.subtract = function(point) {
     var nc = [];
 
     for (var i = 0; i < this.coords.length; i++) {
-	nc[i] = this.coords[i] - point.coords[i];
+	nc[i] = this.makeSafe(this.coords[i] - point.coords[i]);
     }
 
     return new Point(nc);
@@ -147,16 +146,20 @@ Point.prototype.rotate2D = function(drot) {
  * @returns {Point}
  */
 Point.prototype.scale = function(scale) {
-    if (scale && scale.length == this.coords.length) {
+    if (scale == null) {
+	throw "Scale vector can't be null";
+    }
+    if (scale.length == this.coords.length) {
 
 	var nc = [];
 
 	for (var i = 0; i < this.coords.length; i++) {
-	    nc[i] = this.coords[i] * scale[i];
+	    nc[i] = this.makeSafe(this.coords[i] * scale[i]);
 	}
 	return new Point(nc);
     }
-    return this.copy();
+    throw "Scale error: Expected vector of size " + this.coords.length
+	    + " but was " + scale.length;
 };
 
 Point.prototype.equals = function(other) {
@@ -183,15 +186,12 @@ Point.prototype.magnitude = function() {
     for (var i = 0; i < this.coords.length; i++) {
 	var v = this.coords[i];
 
-	sum += v * v;
+	var p = this.makeSafe(v * v);
+	sum = this.makeSafe(sum + p);
+
     }
-    
-    if(sum < Number.MAX_VALUE){
-	this.magVal = Math.sqrt(sum);
-    }
-    else{
-	this.magVal = Number.MAX_VALUE;
-    }
+
+    this.magVal = Math.sqrt(sum);
 
     return this.magVal;
 }
@@ -252,14 +252,14 @@ PhysicalObject.prototype.hasChanged = function(changer) {
      */
     if (changer.updateIndex > this.updateIndex) {
 	this.changedBy = changer;
-	this.universe.toUpdate.push(this);
+	this.universe.toUpdate[this.updateIndex] = this;
 	// console.log("mark for update "+this.updateIndex);
     }
 }
 
 PhysicalObject.prototype.markAsChanged = function() {
     this.prepareToCompute();
-    this.universe.toUpdate.push(this);
+    this.universe.toUpdate[this.updateIndex] = this;
 
 }
 
@@ -274,11 +274,13 @@ PhysicalObject.prototype.printObjInfo = function() {
 
 }
 
-function Universe(dimensions) {
+function Universe(dimensions, config) {
     this.dimensions = dimensions;
     this.objects = new Array();
     this.pointsObjects = new Object();
-    this.toUpdate = [];
+    this.toUpdate = {};
+    this.config = config;
+    this.spherical = true;
 }
 
 Universe.prototype.compute = function() {
@@ -296,11 +298,23 @@ Universe.prototype.compute = function() {
 	obj.changedBy = null;
     }
 
-    while (this.toUpdate.length > 0) {
-	var obj = this.toUpdate.shift();
-	obj.compute(this);
-	obj.changedBy = null;
-    }
+    var updated = 0;
+
+    do {
+	updated = 0;
+	for ( var oi in this.toUpdate) {
+
+	    var obj = this.toUpdate[oi];
+	    if (obj != null) {
+		updated++;
+		obj.compute(this);
+		obj.changedBy = null;
+	    }
+	    delete this.toUpdate[oi];
+	}
+    } while (updated > 0);
+
+    this.toUpdate = {};
 };
 
 Universe.prototype.draw = function(canvas) {
@@ -317,7 +331,45 @@ Universe.prototype.addObject = function(object) {
     /* the order in which objects are updated */
     object.updateIndex = objIndex;
     object.universe = this;
+
+    if (this.spherical) {
+	var p = object.position;
+	var xc = p.x();
+	var yc = p.y();
+	
+	var si = this.config.side-1;
+
+	var xcside = xc == 0 || xc == si;
+	var ycside = yc == 0 || yc == si;
+
+	var s2 = si / 2;
+	var sm = this.config.side;
+
+	var nxc = xc - sm * Math.sign(xc - s2);
+	var nyc = yc - sm * Math.sign(yc - s2);
+
+	if (xcside) {
+
+	    this.setObjectForCoords([ nxc, yc ], object);
+	}
+
+	if (ycside) {
+
+	    this.setObjectForCoords([ xc, nyc ], object);
+	}
+
+	if(xcside && ycside){
+	    this.setObjectForCoords([ nxc, nyc ], object);
+	}
+	
+    }
 };
+
+Universe.prototype.setObjectForCoords = function(coords, object) {
+    this.pointsObjects[coords] = object;
+    var p = object.position;
+//    console.log("spherical: " + p.x() + ", " + p.y() + " -> " + coords[0] + ", " + coords[1]);
+}
 
 Universe.prototype.getObjectByCoords = function(coords) {
     return this.pointsObjects[coords];

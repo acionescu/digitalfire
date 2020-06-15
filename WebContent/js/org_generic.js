@@ -260,62 +260,46 @@ function DNAEvalEngine() {
 		var cdna = cell.rule.dna;
 		var md = cdna.params.moveDir;
 
-		if (md >= 0 && md <= 7 && cell.state == 1) {
+		if (md >= 0 && md <= 7 && cell.state == 1
+			&& (cell.age - cell.stateAge) > 0) {
 		    var n = cell.neighbors[md];
 		    if (n == null || n.rule.dna == null) {
+
 			/* deal bounce */
-			// if (md % 2 == 1) {
-			// cell.gVec.rotate2D(Math.PI);
-			// } else {
-			// var x = cell.position.x();
-			// var y = cell.position.y();
-			//
-			// var maxSide = cell.universe.config.side - 1
-			//
-			// if ((x == 0 && md == 0)
-			// || (x == maxSide && md == 4)
-			// || (y == maxSide && md == 6)
-			// || (y == 0 && md == 2)) {
-			// cell.gVec.rotate2D(Math.PI / 2);
-			// } else {
-			// cell.gVec.rotate2D(-Math.PI / 2);
-			// }
-			// }
-			var maxSide = cell.universe.config.side - 1;
-			var posx = cell.position.x();
-			var posy = cell.position.y();
 
-			var gvecx = cell.gVec.x();
-			var gvecy = cell.gVec.y();
+//			var maxSide = cell.universe.config.side - 1;
+//
+//			var posx = cell.position.x();
+//			var posy = cell.position.y();
+//
+//			var gvecx = cell.gVec.x();
+//			var gvecy = cell.gVec.y();
+//
+//			if (posx == 0 || posx == maxSide) {
+//			    gvecx *= -1;
+////			    posx = Math.abs(maxSide-posx);
+////			    posy = maxSide-posy;
+//			}
+//
+//			if (posy == 0 || posy == maxSide) {
+//			    gvecy *= -1;
+////			    posy=Math.abs(maxSide-posy);
+////			    posx=maxSide-posx;
+//			}
+//
+//			cell.gVec = new Point([ gvecx, gvecy ]);
 
-			if (posx == 0 || posx == maxSide) {
-			    gvecx *= -1;
-			}
+			// cell.oldGVec = cell.gVec.copy();
 
-			if (posy == 0 || posy == maxSide) {
-			    gvecy *= -1;
-			}
-
-			cell.gVec = new Point([ gvecx, gvecy ]);
-
-			cell.oldGVec = cell.gVec.copy();
-
-			// cell.gVec=new Point([0,0]);
-			//			
-			// else if(md ==0 && cell.|| md ==4 ){
-			// cell.gVec.rotate2D(Math.PI/2);
-			// }
-			// else{
-			// cell.gVec.rotate2D(-Math.PI/2);
-			// }
-			// console.log("bounce "+cell.gDir +" ->
-			// "+mapDirectionToNeighbor(cell.gVec));
-			// cell.gVec = cell.gVec.scale([1.1,1.1]);
-		    } else if ( n.state ==1 ) {
+		    } else if (n.state == 1) {
 			/* deal collision */
 
 			var gdif = cell.oldG - n.oldG;
 			var gsum = cell.oldG + n.oldG;
+			
+			if(gsum==0){
+			    console.log("gsum is 0");
+			}
 
 			var gr = 0;
 			if (gsum != 0) {
@@ -326,73 +310,142 @@ function DNAEvalEngine() {
 			    gr = 0;
 			}
 
-			// var sf1 = 2 * n.oldG / gsum;
-			// var sf2 = 2 * cell.oldG / gsum;
-			//			
-			// var crVec = cell.oldGVec.scale([ gr, gr ]).add(
-			// n.oldGVec.scale([ sf1, sf1 ]));
-			// var nrVec = n.oldGVec.scale([ -gr, -gr ]).add(
-			// cell.oldGVec.scale([ sf2, sf2 ]));
-			//			
-			// cell.gVec = crVec;
-			// cell.oldGVec = crVec.copy();
-			// n.gVec = nrVec;
-			// n.oldGVec = nrVec.copy();
+			if (Math.abs(cell.oldGDir - n.oldGDir) != 4 || cell.updateIndex > n.updateIndex) {
+
+			    var sf1 = 2 * n.oldG / gsum;
+			    var sf2 = 2 * cell.oldG / gsum;
+//
+//			     console.log("collision: "+cell.oldGVec.coords +" vs "+n.oldGVec.coords + " "+cell.oldG +"g vs "+n.oldG+"g" +" gr= "+gr+" gdir="+cell.oldGDir +" ndir="+n.oldGDir +" gdirDir="+Math.abs(cell.oldGDir - n.oldGDir));
+
+			    var crVec = cell.oldGVec.scale([ -gr, -gr ]).add(n.oldGVec.scale([ sf1, sf1 ]));
+			    
+			    var nrVec = n.oldGVec.scale([ gr, gr ]).add(cell.oldGVec.scale([ sf2, sf2 ]));
+
+			    cell.gVec = crVec;
+			    cell.oldGVec = crVec.copy();
+			    n.gVec = nrVec;
+			    n.oldGVec = nrVec.copy();
+			    // n.prepareToCompute();
+
+			    
+//			     	 var tr = (1 - gr );
+//				 if(tr < 0){
+//				     console.log("tr < 0");
+//				 }
+//				 // cell.oldGVec = cell.gVec.copy();
+//				 var te = cell.oldGVec.scale([ tr, tr ]);
+//				
+//				 var ntr = 2 * n.oldG / gsum;
+//				 cell.gVec = cell.gVec.subtract(te).add(n.oldGVec.scale([sf1,sf1]));
+//						
+//				 var tr2= 1+gr;
+//				var te2=n.oldGVec.scale([tr2,tr2]);
+//				 n.gVec = n.gVec.subtract(te2).add(cell.oldGVec.scale([sf2,sf2]));  
+			  			    
+//			    console.log("after collision:  "+cell.gVec.coords+" vs "+n.gVec.coords);
+
+			}
+
+//			if (cell.oldG < 0) {
+//			    console.log("ups: oldG is negative");
+//			}
 
 			/* compute transfer energy ratio */
-			var tr = (1 - gr -cell.oldG*cell.oldG/cell.gMag);
-
+//			 var tr = (1 - gr);
+						
+//			 console.log("collision: "+cell.oldGVec.magnitude() +" vs "+n.oldGVec.magnitude() + " "+cell.oldG +"g vs "+n.oldG+"g");
 			
-			var te = cell.gVec.scale([ tr, tr ]);
-
-			cell.gVec = cell.gVec.subtract(te);
-			cell.oldGVec = cell.gVec.copy();
 			
-			n.gVec = n.gVec.add(te);
-			n.oldGVec = n.gVec.copy();
-			
+			 // n.oldGVec = n.gVec.copy();
+			 // n.prepareToCompute();
+			 // n.hasChanged(cell);
+						
+//			 console.log("after collision: "+cell.gVec.magnitude()+" vs "+n.gVec.magnitude());
+						
+			// if(cell.gVec.magnitude() == Number.MAX_VALUE &&
+			// cell.oldGMag < Number.MAX_VALUE ){
+			// console.log("max value reached on collision");
+			// }
+			// if(n.gVec.magnitude() == Number.MAX_VALUE &&
+			// n.oldGMag < Number.MAX_VALUE ){
+			// console.log("max value reached on collision");
+			// }
 		    } else {
 
 			var ndna = n.rule.dna;
 			if (ndna.params.type == cdna.params.type) {
-			    ndna.setStateOn(n);
-			    cdna.setStateOff(cell);
-
 			    /* update gs */
 
-			    cell.g -= Cell.META.CONST.CR;
-			    if (cell.g < 0) {
-				cell.g = 0;
+			    rawg = cell.oldG - Cell.META.CONST.CR;
+			    if (rawg < 0) {
+				// rawg = 0;
+				// console.log("rawg is negative");
 			    }
 
 			    // var
 			    // sf=1-Cell.META.CONST.CR/cell.gVec.magnitude();
 
-			    var gsum = cell.oldG + n.oldG;
+//			    var gsum = cell.oldG + n.oldG;
 			    var sf = 1;
-			    if (gsum != 0 && cell.gMag != 0) {
-				
-//				sf = (1 - (cell.g - n.oldG)/ cell.oldG);
-				
-//				sf = (1 - cell.g*cell.g/cell.gMag);
-				
-				sf = (1 - (cell.g - n.oldG)/ (cell.oldG+n.oldG) - cell.g*cell.g/cell.gMag);
-				
-//				sf = (1 - (cell.g - n.oldG + Cell.META.CONST.CTNR )/ cell.oldG - cell.g*Cell.META.CONST.CR/cell.gMag);
+
+			     var d = cell.rule.dna.params.MME;
+			    if (d == null) {
+				d = 0;
+
+			    }
+			    // if (gsum != 0 && cell.gMag != 0) {
+
+			    // sf = (1 - (cell.g - n.oldG)/ cell.oldG);
+
+			    // sf = (1 - cell.g*cell.g/cell.gMag);
+
+			    sf = (cell.gMag - (rawg - n.oldG)
+				    * Cell.META.CONST.CR - d)
+				    / cell.gMag;
+
+			    // sf = (1 - Cell.META.CONST.CR);
+
+			    // sf = (1 - (rawg -
+			    // n.oldG)*Cell.META.CONST.CR/cell.oldGMag -
+			    // Cell.META.CONST.CR/cell.oldGMag);
+			    // }
+
+			    if (sf < 0) {
+				// console.log("sf < 0 return");
+				// sf=1;
+				return;
 			    }
 
 			    n.gVec = cell.gVec.scale([ sf, sf ]);
-			    n.oldGVec = cell.oldGVec.scale([ sf, sf ]);
+			    n.oldGVec = cell.oldGVec.copy();
+			    n.gMag = n.gVec.magnitude();
+			    n.gDir = cell.gDir;
 
 			    cell.gVec = new Point([ 0, 0 ]);
 			    cell.oldGVec = new Point([ 0, 0 ]);
 			    cell.gMag = 0;
 			    cell.gDir = -1;
 
-			    n.g += Cell.META.CONST.CR;
+			    // if(n.gVec.magnitude() == Number.MAX_VALUE &&
+			    // cell.oldGMag < Number.MAX_VALUE ){
+			    // console.log("max value reached on move");
+			    // }
+
+			    ndna.setStateOn(n);
+			    cdna.setStateOff(cell);
 
 			    n.drawn = false;
 			    cell.drawn = false;
+
+			    if (n.updateIndex < cell.updateIndex) {
+				// n.g += Cell.META.CONST.CR;
+				// n.oldG +=Cell.META.CONST.CR;
+				// n.prepareToCompute();
+				n.hasChanged(cell);
+
+			    } else {
+				// cell.g -= Cell.META.CONST.CR;
+			    }
 
 			} else {
 			    console.log(cell.pos + " -> Cell of type "
@@ -778,9 +831,11 @@ function DNAEvalEngine() {
 
 		var f = 9;
 
-		var selfFactor = cell.oldState / (f * f);
+		var selfFactor = (cell.oldState) / (f * f);
 
 		cell.gForces = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
+
+		var oldng = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
 
 		/* apply mask */
 		for (var i = 0; i < size; i++) {
@@ -788,20 +843,88 @@ function DNAEvalEngine() {
 			continue;
 		    }
 
+		    oldng[i] = n[i].oldG;
+
 		    var ng = n[i].oldG - selfFactor;
+
+		    if (i % 2 == 0) {
+			ng -= 2 * selfFactor / 9;
+		    } else {
+			ng -= 4 * selfFactor / 9;
+		    }
+
 		    if (ng < 0) {
+			// console.log("ng negative: "+ng);
 			ng = 0;
 		    }
 		    /* update g with the g of the neighbor */
 		    cell.g += ng;
 		    /* update neighbors g forces array */
 		    cell.gForces[i] = ng;// n[i].oldG;
+
 		}
+
+		// var nf = [0,0,0,0,0,0,0,0];
+		//		
+		// if(n[0] !=null){
+		// nf[0] = selfFactor;
+		// cell.gForces[0] = n[0].oldG - nf[0];
+		//		    
+		// }
+		// if(n[1] != null){
+		// nf[1]= selfFactor + nf[0]/9
+		// cell.gForces[1] = n[1].oldG - nf[1];
+		// }
+		// if(n[2] != null){
+		// nf[2] = selfFactor + nf[1]/9;
+		// cell.gForces[2] = n[2].oldG - nf[2];
+		// }
+		// if(n[3] != null){
+		// nf[3] = selfFactor + nf[1]/9 + nf[2]/9;
+		// // if(n[5] != null){
+		// // nf[3] += n[5].oldG/9;
+		// // }
+		// cell.gForces[3] = n[3].oldG - nf[3];
+		// }
+		// if(n[7] != null){
+		// nf[7] = selfFactor + nf[0]/9 + nf[1]/9;
+		// // if(n[6] != null ){
+		// // nf[7] += n[6].oldG/9;
+		// // }
+		// // if(n[5] != null){
+		// // nf[7] += n[5].oldG/9;
+		// // }
+		// cell.gForces[7] = n[7].oldG - nf[7];
+		// }
+		// if(n[6] != null){
+		// nf[6] = selfFactor + nf[7]/9;
+		// // if(n[5] != null){
+		// // nf[6] += n[5].oldG/9;
+		// // }
+		// cell.gForces[6] = n[6].oldG - nf[6];
+		// }
+		// if(n[5] != null){
+		// nf[5] = selfFactor + nf[7]/9 + nf[6]/9 + nf[3]/9;
+		// // if(n[4] != null){
+		// // nf[5] += n[4].oldG/9;
+		// // }
+		// cell.gForces[5] = n[5].oldG - nf[5];
+		// }
+		// if(n[4] != null){
+		// nf[4] = selfFactor + nf[5]/9 + nf[3]/9;
+		// cell.gForces[4] = n[4].oldG - nf[4];
+		// }
+		//		
+		// for (var i = 0; i < size; i++) {
+		// cell.g += cell.gForces[i];
+		// }
+
 		// cell.g += alive;
 		/* norm g with the max value */
 		cell.g = cell.g / f;
 
-		if (cell.state == 1 && (cell.age - cell.stateAge) > 1) {
+		/* we can't move twice in the same iteration */
+		if (cell.state == 1 && (cell.age - cell.stateAge) > 0) {
 
 		    /* compute instant g force */
 		    var rg = getResultantForce(cell.gForces);
@@ -811,42 +934,41 @@ function DNAEvalEngine() {
 		    /* gravity component ratio */
 		    var gcr = 1;
 
-		    rg = rg.scale(cell.oldG);
+		    var sr = Cell.META.CONST.CR;
+
+		    // rg = rg.scale([sr,sr]);
 
 		    var gVec = oldGVec.add(rg);
-		    
-//		    var rawg = (cell.oldG - Cell.META.CONST.CR);
-//
-//		    var d = gVec.magnitude() - rawg*rawg;
-//
-//		    if (d > 0) {
-//			var sr = d / gVec.magnitude();
-//			gVec = gVec.scale([ sr, sr ]);
 
-			cell.gDir = mapDirectionToNeighbor(gVec);
-			cell.gMag = gVec.magnitude();
-			cell.gVec = gVec;
-//		    } else {
-//			cell.gDir = -1
-//			cell.gMag = 0;
-//			cell.gVec = new Point([ 0, 0 ]);
-//		    }
+		    // var rawg = (cell.oldG - Cell.META.CONST.CR);
+		    //
+		    // var d = gVec.magnitude() - rawg*rawg;
+		    //
+		    // if (d > 0) {
+		    // var sr = d / gVec.magnitude();
+		    // gVec = gVec.scale([ sr, sr ]);
+
+		    cell.gDir = mapDirectionToNeighbor(gVec);
+		    cell.gMag = gVec.magnitude();
+		    cell.gVec = gVec;
+
+		    // if(cell.age < 200){
+		    // console.log(cell.age +" -> g: "+cell.g+" gmag:
+		    // "+cell.oldGMag);
+		    // }
+
+		    // } else {
+		    // cell.gDir = -1
+		    // cell.gMag = 0;
+		    // cell.gVec = new Point([ 0, 0 ]);
+		    // }
 
 		    if (cell.gMag == null) {
 			console.log("Ups. gmag=null " + cell.position.x() + " "
 				+ cell.position.y());
 		    }
 
-		} else if (cell.oldState != cell.state) {
-		    // cell.gDir = -1;
-		    // cell.gMag = 0;
-		    // cell.gVec = new Point([ 0, 0 ]);
-		    // cell.oldGVec = new Point([ 0, 0 ]);
-
-		    // var rg = getResultantForce(cell.gForces);
-		    // console.log("instant force on switch: "+cell.oldState+"
-		    // -> "+cell.state+" : "+rg.coords);
-		}
+		} 
 
 		// if(cell.state != cell.oldState){
 		// console.log(" computeg g="+cell.g+" gMag="+cell.gMag+"

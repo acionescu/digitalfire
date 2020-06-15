@@ -25,7 +25,7 @@
 
 function CellularAutomata(dimensions, config) {
 
-    Universe.call(this, dimensions);
+    Universe.call(this, dimensions, config);
     this.config = config;
 }
 
@@ -98,6 +98,7 @@ Cell.prototype.prepareToCompute = function() {
     this.oldGMag = this.gMag;
     
     this.oldGVec=this.gVec.copy();
+   
 }
 
 Cell.prototype.compute = function(automata) {
