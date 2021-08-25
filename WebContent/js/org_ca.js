@@ -268,14 +268,27 @@ OrgCellRuleDNA.prototype.setupType = function(type) {
 	 * this type creates a chain structure, where, if one cell is changed (
 	 * e.g. dies ), it affects the others as well
 	 */
-	chainType : false
+	chainType : false,
+	
+	fields:{}
     }
 
+	/* init fields params */
+	
+	
+	for(var ft in FIELDS){
+		var fc = FIELDS[ft];
+		
+		this.params.fields[fc.fieldType]=JSON.parse(JSON.stringify(fc.config.params));
+	}
+
     for ( var pn in tDefParams) {
-	this.params[pn] = tDefParams[pn];
+		this.params[pn] = tDefParams[pn];
     }
 
 }
+
+
 
 /**
  * Override default cell behavior

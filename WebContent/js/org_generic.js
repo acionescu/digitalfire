@@ -164,6 +164,22 @@ function DNAEvalEngine() {
 			return "cell.rule.dna.relPos.y()";
 		    }
 		},
+		"POS.X" : {
+		    desc : "The X coordinate of cell position.",
+		    usage : "POS.X",
+		    regexp : "POS\\.X",
+		    proc : function(match) {
+			return "cell.position.x()";
+		    }
+		},
+		"POS.Y" : {
+		    desc : "The Y coordinate rof cell position.",
+		    usage : "POS.Y",
+		    regexp : "POS\\.Y",
+		    proc : function(match) {
+			return "cell.position.y()";
+		    }
+		},
 		"C.G" : {
 		    desc : "Cell's gravity",
 		    usage : "C.G",
@@ -186,6 +202,50 @@ function DNAEvalEngine() {
 		    regexp : "C\\.GMAG",
 		    proc : function(match) {
 			return "cell.gMag";
+		    }
+		},
+		"C.CC" : {
+		    desc : "The compute count this iteration",
+		    usage : "C.CC",
+		    regexp : "C\\.CC",
+		    proc : function(match) {
+			return "cell.computeCount";
+		    }
+		},
+		"MAG" : {
+		    desc : "Computes the magnitude of a vector variable",
+		    usage : "MAG(&lt;expression&gt;) - don't use nested parentheses",
+		    regexp : "MAG\\((.*?\\))",
+		    proc : function(match) {
+			var subStr = match.substring(4, match.length - 1);
+			return self.parseCondition(subStr) + ".magnitude()";
+		    }
+		},
+		"DIR" : {
+		    desc : "Computes the direction of a vector variable",
+		    usage : "DIR(&lt;expression&gt;) - don't use nested parentheses",
+		    regexp : "DIR\\((.*?\\))",
+		    proc : function(match) {
+			var subStr = match.substring(4, match.length - 1);
+			return "mapDirectionToNeighbor("+self.parseCondition(subStr) + ")";
+		    }
+		},
+		"FVAL" : {
+		    desc : "Reads a a field value",
+		    usage : "FVAL.&lt;field name&gt;",
+		    regexp : "FVAL\\.\\w*",
+		    proc : function(match) {
+			var name = match.substring(5);
+			return "cell.fields." + name+".fieldVal";
+		    }
+		},
+		"FF" : {
+		    desc : "Reads a field's force",
+		    usage : "FF.&lt;field name&gt;",
+		    regexp : "FF\\.\\w*",
+		    proc : function(match) {
+			var name = match.substring(5);
+			return "cell.fields." + name+".fForce";
 		    }
 		}
 	    }, {
@@ -251,213 +311,6 @@ function DNAEvalEngine() {
 				});
 	    }
 	},
-	/* set replication type */
-	"MOVE" : {
-	    desc : "Moves this cell in the direction specified via SMD command.",
-	    usage : "MOVE;",
-	    regexp : "MOVE;",
-	    op : function(cell) {
-		var cdna = cell.rule.dna;
-		var md = cdna.params.moveDir;
-
-		if (md >= 0 && md <= 7 && cell.state == 1
-			&& (cell.age - cell.stateAge) > 0) {
-		    var n = cell.neighbors[md];
-		    if (n == null || n.rule.dna == null) {
-
-			/* deal bounce */
-
-//			var maxSide = cell.universe.config.side - 1;
-//
-//			var posx = cell.position.x();
-//			var posy = cell.position.y();
-//
-//			var gvecx = cell.gVec.x();
-//			var gvecy = cell.gVec.y();
-//
-//			if (posx == 0 || posx == maxSide) {
-//			    gvecx *= -1;
-////			    posx = Math.abs(maxSide-posx);
-////			    posy = maxSide-posy;
-//			}
-//
-//			if (posy == 0 || posy == maxSide) {
-//			    gvecy *= -1;
-////			    posy=Math.abs(maxSide-posy);
-////			    posx=maxSide-posx;
-//			}
-//
-//			cell.gVec = new Point([ gvecx, gvecy ]);
-
-			// cell.oldGVec = cell.gVec.copy();
-
-		    } else if (n.state == 1) {
-			/* deal collision */
-
-			var gdif = cell.oldG - n.oldG;
-			var gsum = cell.oldG + n.oldG;
-			
-			if(gsum==0){
-			    console.log("gsum is 0");
-			}
-
-			var gr = 0;
-			if (gsum != 0) {
-			    gr = gdif / gsum;
-			}
-
-			if (isNaN(gr)) {
-			    gr = 0;
-			}
-
-			if (Math.abs(cell.oldGDir - n.oldGDir) != 4 || cell.updateIndex > n.updateIndex) {
-
-			    var sf1 = 2 * n.oldG / gsum;
-			    var sf2 = 2 * cell.oldG / gsum;
-//
-//			     console.log("collision: "+cell.oldGVec.coords +" vs "+n.oldGVec.coords + " "+cell.oldG +"g vs "+n.oldG+"g" +" gr= "+gr+" gdir="+cell.oldGDir +" ndir="+n.oldGDir +" gdirDir="+Math.abs(cell.oldGDir - n.oldGDir));
-
-			    var crVec = cell.oldGVec.scale([ -gr, -gr ]).add(n.oldGVec.scale([ sf1, sf1 ]));
-			    
-			    var nrVec = n.oldGVec.scale([ gr, gr ]).add(cell.oldGVec.scale([ sf2, sf2 ]));
-
-			    cell.gVec = crVec;
-			    cell.oldGVec = crVec.copy();
-			    n.gVec = nrVec;
-			    n.oldGVec = nrVec.copy();
-			    // n.prepareToCompute();
-
-			    
-//			     	 var tr = (1 - gr );
-//				 if(tr < 0){
-//				     console.log("tr < 0");
-//				 }
-//				 // cell.oldGVec = cell.gVec.copy();
-//				 var te = cell.oldGVec.scale([ tr, tr ]);
-//				
-//				 var ntr = 2 * n.oldG / gsum;
-//				 cell.gVec = cell.gVec.subtract(te).add(n.oldGVec.scale([sf1,sf1]));
-//						
-//				 var tr2= 1+gr;
-//				var te2=n.oldGVec.scale([tr2,tr2]);
-//				 n.gVec = n.gVec.subtract(te2).add(cell.oldGVec.scale([sf2,sf2]));  
-			  			    
-//			    console.log("after collision:  "+cell.gVec.coords+" vs "+n.gVec.coords);
-
-			}
-
-//			if (cell.oldG < 0) {
-//			    console.log("ups: oldG is negative");
-//			}
-
-			/* compute transfer energy ratio */
-//			 var tr = (1 - gr);
-						
-//			 console.log("collision: "+cell.oldGVec.magnitude() +" vs "+n.oldGVec.magnitude() + " "+cell.oldG +"g vs "+n.oldG+"g");
-			
-			
-			 // n.oldGVec = n.gVec.copy();
-			 // n.prepareToCompute();
-			 // n.hasChanged(cell);
-						
-//			 console.log("after collision: "+cell.gVec.magnitude()+" vs "+n.gVec.magnitude());
-						
-			// if(cell.gVec.magnitude() == Number.MAX_VALUE &&
-			// cell.oldGMag < Number.MAX_VALUE ){
-			// console.log("max value reached on collision");
-			// }
-			// if(n.gVec.magnitude() == Number.MAX_VALUE &&
-			// n.oldGMag < Number.MAX_VALUE ){
-			// console.log("max value reached on collision");
-			// }
-		    } else {
-
-			var ndna = n.rule.dna;
-			if (ndna.params.type == cdna.params.type) {
-			    /* update gs */
-
-			    rawg = cell.oldG - Cell.META.CONST.CR;
-			    if (rawg < 0) {
-				// rawg = 0;
-				// console.log("rawg is negative");
-			    }
-
-			    // var
-			    // sf=1-Cell.META.CONST.CR/cell.gVec.magnitude();
-
-//			    var gsum = cell.oldG + n.oldG;
-			    var sf = 1;
-
-			     var d = cell.rule.dna.params.MME;
-			    if (d == null) {
-				d = 0;
-
-			    }
-			    // if (gsum != 0 && cell.gMag != 0) {
-
-			    // sf = (1 - (cell.g - n.oldG)/ cell.oldG);
-
-			    // sf = (1 - cell.g*cell.g/cell.gMag);
-
-			    sf = (cell.gMag - (rawg - n.oldG)
-				    * Cell.META.CONST.CR - d)
-				    / cell.gMag;
-
-			    // sf = (1 - Cell.META.CONST.CR);
-
-			    // sf = (1 - (rawg -
-			    // n.oldG)*Cell.META.CONST.CR/cell.oldGMag -
-			    // Cell.META.CONST.CR/cell.oldGMag);
-			    // }
-
-			    if (sf < 0) {
-				// console.log("sf < 0 return");
-				// sf=1;
-				return;
-			    }
-
-			    n.gVec = cell.gVec.scale([ sf, sf ]);
-			    n.oldGVec = cell.oldGVec.copy();
-			    n.gMag = n.gVec.magnitude();
-			    n.gDir = cell.gDir;
-
-			    cell.gVec = new Point([ 0, 0 ]);
-			    cell.oldGVec = new Point([ 0, 0 ]);
-			    cell.gMag = 0;
-			    cell.gDir = -1;
-
-			    // if(n.gVec.magnitude() == Number.MAX_VALUE &&
-			    // cell.oldGMag < Number.MAX_VALUE ){
-			    // console.log("max value reached on move");
-			    // }
-
-			    ndna.setStateOn(n);
-			    cdna.setStateOff(cell);
-
-			    n.drawn = false;
-			    cell.drawn = false;
-
-			    if (n.updateIndex < cell.updateIndex) {
-				// n.g += Cell.META.CONST.CR;
-				// n.oldG +=Cell.META.CONST.CR;
-				// n.prepareToCompute();
-				n.hasChanged(cell);
-
-			    } else {
-				// cell.g -= Cell.META.CONST.CR;
-			    }
-
-			} else {
-			    console.log(cell.pos + " -> Cell of type "
-				    + cdna.params.type
-				    + " can't move to cell of type "
-				    + ndna.params.type + " -> " + n.pos);
-			}
-		    }
-		}
-	    }
-	},
-
 	/* set replication type */
 	"SRT" : {
 	    desc : "Sets the replication type of the cell. This is used during the replication operation to set the type of the offspring cell.",
@@ -659,6 +512,29 @@ function DNAEvalEngine() {
 		// }
 	    }
 	},
+	"SETS" : {
+	    desc : "Sets the cell's state",
+	    usage : "SETS( new state exp);",
+	    regexp : "SETS\\((.*?;)",
+	    proc : function(match, offset, string) {
+		var subStr = match.substring(5, match.length - 2);
+
+		/* create an expression id to index this function */
+
+		if (self.runtime.exp[subStr] == null) {
+		    self.runtime.exp[subStr] = self.getCondition(subStr);
+		}
+
+		return "Cell.DNA_ENGINE.ops['" + "SETS"
+			+ "'].op(cell,Cell.DNA_ENGINE.runtime.exp['" + subStr
+			+ "']);";
+
+	    },
+	    op : function(cell, valFunc) {
+			cell.setState(valFunc(cell));
+			cell.drawn = false;
+	    }
+	},
 	"SNM" : {
 	    desc : "Sets the cell neighbors mask array. Each position of the array addresses a neighbor. Set the value 1 to consider that neighbor when counting alive cells. Set value to 0 to ignore that neighbor. ",
 	    usage : "SNM( change rules array or a refference to an array);",
@@ -764,7 +640,9 @@ function DNAEvalEngine() {
 		 * initialize gravity as well, starting with the state of the
 		 * cell
 		 */
-		cell.g = cell.oldState;
+		var selfG= Math.abs(cell.oldState);
+		 
+		cell.g = selfG;
 
 		/* apply mask */
 		for (var i = 0; i < size; i++) {
@@ -772,7 +650,7 @@ function DNAEvalEngine() {
 			continue;
 		    }
 
-		    if ((n[i].oldState & m[i])) {
+		    if ((Math.abs(n[i].oldState) & m[i])) {
 			nm[i] = 1;
 			alive++;
 
@@ -827,23 +705,23 @@ function DNAEvalEngine() {
 		 * initialize gravity as well, starting with the state of the
 		 * cell
 		 */
-		cell.g = cell.oldState;
+		 
+		var selfG = cell.oldState;
+		
+		cell.g = selfG;
 
 		var f = 9;
 
-		var selfFactor = (cell.oldState) / (f * f);
+		var selfFactor = (selfG) / (f * f);
 
 		cell.gForces = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
 
-		var oldng = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
 
 		/* apply mask */
 		for (var i = 0; i < size; i++) {
 		    if (n[i] == null) {
 			continue;
 		    }
-
-		    oldng[i] = n[i].oldG;
 
 		    var ng = n[i].oldG - selfFactor;
 
@@ -852,79 +730,26 @@ function DNAEvalEngine() {
 		    } else {
 			ng -= 4 * selfFactor / 9;
 		    }
-
-		    if (ng < 0) {
-			// console.log("ng negative: "+ng);
-			ng = 0;
-		    }
+//
+//		    if (ng < 0) {
+//			// console.log("ng negative: "+ng);
+//			ng = 0;
+//		    }
 		    /* update g with the g of the neighbor */
 		    cell.g += ng;
 		    /* update neighbors g forces array */
 		    cell.gForces[i] = ng;// n[i].oldG;
-
+		    
 		}
 
-		// var nf = [0,0,0,0,0,0,0,0];
-		//		
-		// if(n[0] !=null){
-		// nf[0] = selfFactor;
-		// cell.gForces[0] = n[0].oldG - nf[0];
-		//		    
-		// }
-		// if(n[1] != null){
-		// nf[1]= selfFactor + nf[0]/9
-		// cell.gForces[1] = n[1].oldG - nf[1];
-		// }
-		// if(n[2] != null){
-		// nf[2] = selfFactor + nf[1]/9;
-		// cell.gForces[2] = n[2].oldG - nf[2];
-		// }
-		// if(n[3] != null){
-		// nf[3] = selfFactor + nf[1]/9 + nf[2]/9;
-		// // if(n[5] != null){
-		// // nf[3] += n[5].oldG/9;
-		// // }
-		// cell.gForces[3] = n[3].oldG - nf[3];
-		// }
-		// if(n[7] != null){
-		// nf[7] = selfFactor + nf[0]/9 + nf[1]/9;
-		// // if(n[6] != null ){
-		// // nf[7] += n[6].oldG/9;
-		// // }
-		// // if(n[5] != null){
-		// // nf[7] += n[5].oldG/9;
-		// // }
-		// cell.gForces[7] = n[7].oldG - nf[7];
-		// }
-		// if(n[6] != null){
-		// nf[6] = selfFactor + nf[7]/9;
-		// // if(n[5] != null){
-		// // nf[6] += n[5].oldG/9;
-		// // }
-		// cell.gForces[6] = n[6].oldG - nf[6];
-		// }
-		// if(n[5] != null){
-		// nf[5] = selfFactor + nf[7]/9 + nf[6]/9 + nf[3]/9;
-		// // if(n[4] != null){
-		// // nf[5] += n[4].oldG/9;
-		// // }
-		// cell.gForces[5] = n[5].oldG - nf[5];
-		// }
-		// if(n[4] != null){
-		// nf[4] = selfFactor + nf[5]/9 + nf[3]/9;
-		// cell.gForces[4] = n[4].oldG - nf[4];
-		// }
-		//		
-		// for (var i = 0; i < size; i++) {
-		// cell.g += cell.gForces[i];
-		// }
+
 
 		// cell.g += alive;
 		/* norm g with the max value */
 		cell.g = cell.g / f;
 
 		/* we can't move twice in the same iteration */
-		if (cell.state == 1 && (cell.age - cell.stateAge) > 0) {
+		if (cell.state !=0  && (cell.age - cell.stateAge) > 0) {
 
 		    /* compute instant g force */
 		    var rg = getResultantForce(cell.gForces);
@@ -939,6 +764,7 @@ function DNAEvalEngine() {
 		    // rg = rg.scale([sr,sr]);
 
 		    var gVec = oldGVec.add(rg);
+//			var gVec = rg;
 
 		    // var rawg = (cell.oldG - Cell.META.CONST.CR);
 		    //
@@ -976,7 +802,296 @@ function DNAEvalEngine() {
 		// }
 
 	    }
+	},
+	/*move the cell */
+	"MOVE" : {
+	    desc : "Moves this cell in the direction specified via SMD command.",
+	    usage : "MOVE;",
+	    regexp : "MOVE;",
+	    op : function(cell) {
+	    
+		var cdna = cell.rule.dna;
+		var md = cdna.params.moveDir;
+		
+		if (md >= 0 && md <= 7 && cell.state !=0
+			&& (cell.age - cell.stateAge) > 0) {
+//			console.log(cell.updateIndex+": compute count on move: "+cell.computeCount);
+			/* register for the second compute, to sort all cells by their energy */
+			if(cell.computeCount <=1){
+			
+		    	cell.registerForUpdate(cell.gMag,COMPARATORS.DESC);
+		    	return;
+		    }
+			
+			
+		    var n = cell.neighbors[md];
+		    if (n == null || n.rule.dna == null) {
+
+			/* deal bounce */
+			
+
+			var maxSide = cell.universe.config.side - 1;
+
+			var posx = cell.position.x();
+			var posy = cell.position.y();
+
+			var gvecx = cell.gVec.x();
+			var gvecy = cell.gVec.y();
+
+			if (posx == 0 || posx == maxSide) {
+			    gvecx *= -1;
+//			    posx = Math.abs(maxSide-posx);
+//			    posy = maxSide-posy;
+			}
+
+			if (posy == 0 || posy == maxSide) {
+			    gvecy *= -1;
+//			    posy=Math.abs(maxSide-posy);
+//			    posx=maxSide-posx;
+			}
+
+			cell.gVec = new Point([ gvecx, gvecy ]);
+
+			// cell.oldGVec = cell.gVec.copy();
+
+		    } else if (n.state !=0) {
+			/* deal collision */
+			
+			var m1=Math.abs(cell.oldState);
+			var m2=Math.abs(n.oldState);
+
+			var gdif = m1 - m2;
+			var gsum = m1 + m2;
+			
+			if(gsum==0){
+			    console.log("gsum is 0");
+			}
+
+			var gr = 0;
+			if (gsum != 0) {
+			    gr = gdif / gsum;
+			}
+
+			if (isNaN(gr)) {
+			    gr = 0;
+			}
+
+			if (Math.abs(cell.oldGDir - n.oldGDir) != 4 || cell.updateIndex > n.updateIndex) {
+
+			    var sf1 = 2 * m2 / gsum;
+			    var sf2 = 2 * m1 / gsum;
+//
+//			     console.log("collision: "+cell.oldGVec.coords +" vs "+n.oldGVec.coords + " "+cell.oldG +"g vs "+n.oldG+"g" +" gr= "+gr+" gdir="+cell.oldGDir +" ndir="+n.oldGDir +" gdirDir="+Math.abs(cell.oldGDir - n.oldGDir));
+
+			    var crVec = cell.oldGVec.scale([ -gr, -gr ]).add(n.oldGVec.scale([ sf1, sf1 ]));
+			    
+			    var nrVec = n.oldGVec.scale([ gr, gr ]).add(cell.oldGVec.scale([ sf2, sf2 ]));
+
+			    cell.gVec = crVec;
+			    cell.oldGVec = crVec.copy();
+			    n.gVec = nrVec;
+			    n.oldGVec = nrVec.copy();
+			    // n.prepareToCompute();
+
+			    
+//			     	 var tr = (1 - gr );
+//				 if(tr < 0){
+//				     console.log("tr < 0");
+//				 }
+//				 // cell.oldGVec = cell.gVec.copy();
+//				 var te = cell.oldGVec.scale([ tr, tr ]);
+//				
+//				 var ntr = 2 * n.oldG / gsum;
+//				 cell.gVec = cell.gVec.subtract(te).add(n.oldGVec.scale([sf1,sf1]));
+//						
+//				 var tr2= 1+gr;
+//				var te2=n.oldGVec.scale([tr2,tr2]);
+//				 n.gVec = n.gVec.subtract(te2).add(cell.oldGVec.scale([sf2,sf2]));  
+			  			    
+//			    console.log("after collision:  "+cell.gVec.coords+" vs "+n.gVec.coords);
+
+			}
+
+//			if (cell.oldG < 0) {
+//			    console.log("ups: oldG is negative");
+//			}
+
+			/* compute transfer energy ratio */
+//			 var tr = (1 - gr);
+						
+//			 console.log("collision: "+cell.oldGVec.magnitude() +" vs "+n.oldGVec.magnitude() + " "+cell.oldG +"g vs "+n.oldG+"g");
+			
+			
+			 // n.oldGVec = n.gVec.copy();
+			 // n.prepareToCompute();
+			 // n.hasChanged(cell);
+						
+//			 console.log("after collision: "+cell.gVec.magnitude()+" vs "+n.gVec.magnitude());
+						
+			// if(cell.gVec.magnitude() == Number.MAX_VALUE &&
+			// cell.oldGMag < Number.MAX_VALUE ){
+			// console.log("max value reached on collision");
+			// }
+			// if(n.gVec.magnitude() == Number.MAX_VALUE &&
+			// n.oldGMag < Number.MAX_VALUE ){
+			// console.log("max value reached on collision");
+			// }
+		    } else {
+
+			var ndna = n.rule.dna;
+			if (ndna.params.type == cdna.params.type) {
+			    /* update gs */
+
+			    rawg = cell.oldG - Cell.META.CONST.CR;
+			    if (rawg < 0) {
+				// rawg = 0;
+				// console.log("rawg is negative");
+			    }
+			    
+
+			    // var
+			    // sf=1-Cell.META.CONST.CR/cell.gVec.magnitude();
+
+//			    var gsum = cell.oldG + n.oldG;
+			    var sf = 1;
+
+			     var d = cell.rule.dna.params.MME;
+			    if (d == null) {
+					d = 0;
+			    }
+			    // if (gsum != 0 && cell.gMag != 0) {
+
+			    // sf = (1 - (cell.g - n.oldG)/ cell.oldG);
+			    
+//			    if(cell.oldGMag ==0){
+//			    console.log("Ups gmag is 0");
+//			    }
+
+			     sf = (1- d/cell.gMag);
+//console.log("cell state: "+cell.state+" scale gvec by "+sf);
+//		    sf = (cell.gMag - n.oldG - d)
+//				    / cell.gMag;
+
+			    // sf = (1 - Cell.META.CONST.CR);
+
+			    // sf = (1 - (rawg -
+			    // n.oldG)*Cell.META.CONST.CR/cell.oldGMag -
+			    // Cell.META.CONST.CR/cell.oldGMag);
+			    // }
+
+			    if (sf < 0) {
+//				 console.log("sf < 0 return");
+//				cell.gVec=new Point([0,0]);
+//				cell.gMag=0;
+				return;
+			    }
+
+			    n.gVec = cell.gVec.scale([ sf, sf ]);
+			    n.oldGVec = cell.oldGVec.copy();
+			    n.gMag = n.gVec.magnitude();
+			    n.gDir = cell.gDir;
+			    n.fields=cell.fields;
+
+			    cell.gVec = new Point([ 0, 0 ]);
+			    cell.oldGVec = new Point([ 0, 0 ]);
+			    cell.gMag = 0;
+			    cell.gDir = -1;
+			    cell.fields={};
+			    
+			    ndna.params.color=cdna.params.color;
+			    n.color=cell.color;
+			    
+//			    console.log(n.gVec);
+
+			    // if(n.gVec.magnitude() == Number.MAX_VALUE &&
+			    // cell.oldGMag < Number.MAX_VALUE ){
+			    // console.log("max value reached on move");
+			    // }
+
+			    n.setState(cell.state);
+			    cdna.setStateOff(cell);
+
+			    n.drawn = false;
+			    cell.drawn = false;
+
+//			    if (n.updateIndex < cell.updateIndex ) {
+				// n.g += Cell.META.CONST.CR;
+				// n.oldG +=Cell.META.CONST.CR;
+//				n.hasChanged(cell);
+
+//			    } else {
+//				// cell.g -= Cell.META.CONST.CR;
+//			    }
+
+			} else {
+			    console.log(cell.pos + " -> Cell of type "
+				    + cdna.params.type
+				    + " can't move to cell of type "
+				    + ndna.params.type + " -> " + n.pos);
+			}
+		    }
+		}
+	    }
 	}
+	,
+	"COMPUTEEMF" : {
+	    desc : "Computes the electromagnetic field",
+	    usage : "COMPUTEEMF;",
+	    regexp : "COMPUTEEMF;",
+	    op : function(cell) {
+	    	FIELDS.EM.computeField(cell);
+	    }
+	   }
+	   ,
+	"COMPUTEGF" : {
+	    desc : "Computes the gravitational field",
+	    usage : "COMPUTEGF;",
+	    regexp : "COMPUTEGF;",
+	    op : function(cell) {
+	    	FIELDS.G.computeField(cell);
+	    }
+	   },
+	"COMPUTEDEMF" : {
+	    desc : "Computes the dynamic electromagnetic field",
+	    usage : "COMPUTEDEMF;",
+	    regexp : "COMPUTEDEMF;",
+	    op : function(cell) {
+	    	FIELDS.DEM.computeField(cell);
+	    }
+	   }
+	   ,
+	"COMPUTESP" : {
+	    desc : "Computes superposition of fields",
+	    usage : "COMPUTESP;",
+	    regexp : "COMPUTESP;",
+	    op : function(cell) {
+	    	var gVec = cell.oldGVec;
+	    	var g=0;
+	    	var cdna =cell.rule.dna;
+	    	
+	    	for(var ft in cell.fields){
+	    		var fConfig = cdna.params.fields[ft];
+	    		var fr=fConfig.fieldRatio;
+	    		gVec = gVec.add(cell.fields[ft].fForce.scale([fr,fr]));
+	    		g+= cell.fields[ft].selfForce*fr;
+	    	}
+	    	cell.g=g;
+	    	cell.gDir=-1;
+	    	if (cell.state !=0  && (cell.age - cell.stateAge) > 0) {
+		    	cell.gDir = mapDirectionToNeighbor(gVec);
+		    	cell.gMag = gVec.magnitude();
+			    cell.gVec = gVec;
+			    
+//			    if(cell.gMag == 0) {
+//			    	console.log("ups gmag is zero");
+//			    }
+//			    else if (cell.gMag < 0){
+//			    	console.log("ups gmag is negative");
+//			    }
+
+		    }
+	    }
+	   }
     };
 
     this.scopesMeta = [];
@@ -1000,6 +1115,50 @@ function DNAEvalEngine() {
     }
 
 }
+
+var FIELDS=FIELDS || {
+	EM: new ForceFieldComputer("EM",
+	{
+		params:{fieldRatio:0.5}
+	}
+	),
+	G: new ForceFieldComputer("G",
+	 {
+	 params:{fieldRatio:0.1},
+	 selfContribFunc:function(cell, ofval){
+		/* by default this is the cell's old state */
+		return Math.abs(cell.state);
+//		return 0.1*Math.abs(cell.state);
+//		return 0.33*Math.abs(cell.oldState);
+	},
+	nForceFunc: function(cell, nfval,ofval){
+//			return Math.abs(cell.state) * (nfval-ofval);
+			
+//			return Math.abs(cell.state * nfval);
+//var r= ofval*nfval;
+var r= (Math.abs(cell.state)+ofval) * (nfval);
+return Math.abs(r);
+//return Math.abs(cell.state * (nfval*ofval));
+		}
+	}),
+	DEM: new ForceFieldComputer("DEM",
+	 {
+	 params:{fieldRatio:1},
+	 selfContribFunc:function(cell, ofval){
+		/* by default this is the cell's old state */
+		return cell.state;
+//		return 0.1*Math.abs(cell.state);
+//		return 0.33*Math.abs(cell.oldState);
+	},
+	nForceFunc: function(cell, nfval,ofval){
+//			return (Math.abs(cell.state)+ofval) * nfval;
+//			return (Math.abs(cell.state)) * nfval; // just a state field interraction
+			return Math.abs(cell.state) * nfval; // just a state field interraction
+		}
+	})
+};
+
+
 
 DNAEvalEngine.prototype = new DNAEvalEngine();
 DNAEvalEngine.prototype.constructor = DNAEvalEngine;

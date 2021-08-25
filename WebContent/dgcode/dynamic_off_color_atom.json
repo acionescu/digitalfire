@@ -1,0 +1,118 @@
+{
+	"title": "Electromagnetic field and gravity",
+	"desc": "Simulates attraction of active cells in the direction of the strongest gravity field. A few observations:<ul><li>It takes a certain intensity of the gravity field to make cells escape their own gravity</li><li>Thus - gravity acts slowly - as energy builds up..</li><li>When cells collide there's just an energy transfer, with the conservation of momentum.'</li></ul>",
+	"types":{
+		"grcell":{
+			"params":{
+				"type":"grcell",
+				/* minimum move period - how many iterations a cell should wait before trying to move again */
+				"MMP": 0,
+				/* minimum move energy - the minimum energy required for a cell to move */
+				"MME": 0,
+				"fields":{
+                                        "DEM":{
+						"fieldRatio":1
+					},
+					"EM":{
+						"fieldRatio":0.729927
+					},
+					"G":{
+						"fieldRatio":0
+					}
+				}
+			}
+		}
+	},
+	"setup": {
+	"config":{
+		"spherical":true
+	},
+		"cells": [
+			{
+				"pos": [
+					60,
+					30
+				],
+				"type":"grcell"
+			},
+			{
+				"pos": [
+					45,
+					60
+				],
+				"type":"grcell"
+			},
+			{
+				"pos": [
+					70,
+					70
+				],
+				"type":"grcell"
+			},
+			{
+				"pos": [
+					65,
+					55
+				],
+				"type":"grcell"
+			},
+			{
+				"pos": [
+					35,
+					45
+				],
+				"type":"grcell"
+			},
+			{
+				"pos": [
+					55,
+					55
+				],
+				"type":"grcell"
+			},
+			{
+				"pos": [
+					0,
+					55
+				],
+				"type":"grcell"
+			},
+			{
+				"pos": [
+					100,
+					76
+				],
+				"type":"grcell"
+			},
+			{
+				"pos": [
+					55,
+					0
+				],
+				"type":"grcell"
+			},
+			{
+				"pos": [
+					35,
+					100
+				],
+				"type":"grcell"
+			}
+		]
+	},
+	"genes": {
+		"ginit": "C.A < 7 && C.GG < 100 -> V.color='white'; OFF; V.MT=0;V.CV=0;V.CD=0; V.PX= POS.X - 50; V.PY=POS.Y-50; V.DIST=(V.PX*V.PX+V.PY*V.PY);  R; SRM(1); V.CRAD=0; V.BMIN=-3; V.BR=2*ABS(V.BMIN); V.BSTEP=V.BR/14; ",
+		"alloff": "C.GG > 0 && C.A==0 -> OFF;",
+		"srcon": "(C.GG==0 || (C.GG%1==0)) && C.A ==10 && V.DIST <V.CRAD -> SETS(100000000); V.color='red';",
+		"setneg": "(C.GG==0 || ((C.GG+1)%9==0)) && C.A ==10 && V.DIST >V.CRAD-> SETS(-100); V.color='blue';",
+                "srconout": "(C.GG==0 || (C.GG%10==0)) && C.A ==10 && V.DIST >V.CRAD -> SETS(2000); V.color='red';",
+		"rop": "C.A > 1 && C.CC ==1 -> COMPUTEDEMF; COMPUTEEMF; COMPUTEGF; COMPUTESP; V.GRA=C.G; V.GM=C.GMAG; V.GD=C.GDIR;",
+		"updatet": "C.A > 10 && C.S!=0 && C.GDIR >=0 -> V.MT=V.MT+1;",
+		"updatev": "V.MT >= V.MMP -> V.CV=C.GMAG-C.G; V.CD=V.CD + V.CV; V.MDIR=C.GDIR; V.MME=ABS(C.G);",
+		"move": "C.S !=0 && C.GMAG> V.MME && V.MDIR > -1 -> V.MT=0;V.CV=0;V.CD=0; SMD(V.MDIR); MOVE;",
+		"poscol": "C.A > 1  && C.S > 0  -> V.color='red';",
+		"negcol": "C.A > 1  && C.S < 0  -> V.color='blue';",
+		"con0": "C.A > 1 -> V.offColor='#000000'; ",
+		"con14": "C.A > 1  -> V.GSTEP=Math.min(Math.max((C.G-V.BMIN)/V.BSTEP,0),15); V.GCOLOR=Math.round(V.GSTEP)*1118481;  V.offColor= '#'+(V.GCOLOR).toString(16).padStart(6, '0');"
+	}
+}
